@@ -10,7 +10,7 @@ TITLE
 
 VERSION
 
-  1.2
+  1.3
 
 AUTHOR
 
@@ -18,26 +18,25 @@ AUTHOR
 
 DESCRIPTION
 
-  GedEiffel is a SmallEiffel mode for GoldEd. It consists of syntax
+  GedEiffel is a SmallEiffel mode for GoldEd 4. It consists of syntax
   parser, routine scanner, toolbar and a couple of ARexx scripts to
   interface `finder' and `pretty'.
 
 FEATURES
 
-  Colorful, practical and free.
+  Colorful, pratical and free.
 
 NEW FEATURES
 
-  Bugfixes and minor improvements.
+  The documentation reflects the unsupported nature of this package,
+  as GoldEd 4 is outdated. For a supported version, you need GoldEd 5
+  (or later) and aminet:text/edit/envSOF*.lha.
 
 SPECIAL REQUIREMENTS
 
   - GoldEd, version 4
 
-  - SmallEiffel, available from aminet:dev/lang/
-
-  - rexxdossupport.library, available from aminet:util/rexx/
-
+  - SmallEiffel, available from aminet:dev/lang/SmallEiffel*.lha.
 
 AVAILABILITY
 

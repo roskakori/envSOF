@@ -55,8 +55,8 @@
 
 (set #message-wrong-golded
 (cat "This script requires GoldED 4.7.\n\n"
-     "If you are using GoldEd 5, refer to the documentation "
-     "about manual installation."
+     "If you are using GoldEd 5 or later, download "
+     "aminet:text/edit/envSOF*.lha"
 ))
 
 

@@ -1,6 +1,6 @@
 @database "Manual.guide"
 @author "Thomas Aglassinger"
-@remark "$VER: Manual.guide 1.2 (4.3.99)"
+@remark "$VER: Manual.guide 1.3 (9.11.99)"
 
 @node MAIN "GedEiffel - A SmallEiffel Mode for GoldEd"
 
@@ -22,9 +22,8 @@
 
    Miscellaneous
 
-      @{" Support       " link SUPPORT} - Where to get updates
+      @{" Support       " link SUPPORT} - No support
       @{" Known bugs    " link BUGS} - Watch out
-      @{" Future        " link FUTURE} - Things to come
       @{" History       " link HISTORY} - What happened so far
 
 
@@ -304,9 +303,12 @@
 
 @node SUPPORT "Support"
 
-   New versions will be uploaded to Aminet. Look for text/edit/GedEiffel.lha
+   This package is not supported anymore as GoldEd 4 is  outdated.  For  a
+   supported  version  for  GoldEd  5, download text/edit/envSOF*.lha from
+   Aminet.
 
-   You can contact the author at the following e-mail address:
+   Nevertheless, you can  contact  the  author  at  the  following  e-mail
+   address:
 
    Thomas Aglassinger <agi\@sbox.tu-graz.ac.at>
 
@@ -328,39 +330,28 @@
      parser,  which  means more work. As this is not proper Eiffel anyway,
      the compiler points out the problem later.
 
-     Thus I don't plan to ever fix this.
-
    · The syntax parser is very slow when closing the  window  because  all
      parser  chunks  are  allocated  using  AllocVec(). Using memory pools
-     would  probably  speed  this  up.  Fixing  this   would   need   some
-     experimenting  (with  several  reboots  and  hex-dump  alike compiler
-     errors), which I don't plan to do.
+     would  probably  speed  this  up.
 
 @endnode
 
 @node FUTURE "Future"
 
-   This is a list of ideas that might be implemented in  future  versions.
-
-   · Include source code for scanner and parser. Currently  they  are  too
-     messy for that.
-
-   · Add  class  browser.  This  mostly  depends  what   the   SmallEiffel
-     distribution has to offer. (Currently nothing, but it might improve.)
-     Hopefully, this will replace the more or  less  useless  "View  short
-     form".
-
-   · Make SmallEiffel use ARexx for sending error messages to editor.
-
-   · Make syntax parser recognize routine declarations.
-
-   Most on the things mentioned below depend on  my  laziness  and  how  a
-   possible  SmallEiffel  movement  develops  on Amiga. So don't hold your
-   breath.
+   No future.
 
 @endnode
 
 @node HISTORY "History"
+
+   @{b}Version 1.3, 9-Nov-1999@{ub}
+      · This is just an update of the documentation.
+      · As  GoldEd  5  is  released,  there  is  no  point  in  continuing
+        supporting  GoldEd  4.  However,  GoldEd 4 is free and GoldEd 5 is
+        not, so I decided to leave this archive as it is, but without  any
+        support.
+      · Download aminet:text/edit/envSOF*.lha for a version that  supports
+        GoldEd 5.
 
    @{b}Version 1.2, 4-Mar-1999@{ub}
 

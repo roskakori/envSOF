@@ -3,9 +3,10 @@ PURPOSE
    This directory contains the full source code for the syntax parser
    and the feature scanner.
 
-   If you want to recompile them or play around, you need DICE. This
-   compiler has recently become freeware, you can obtain the full
-   version from Aminet.
+   If you want to recompile them or play around, you need DICE. You
+   can download it from Aminet.
+
+   Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
 
 SCANNER
 
@@ -18,34 +19,40 @@ SCANNER
    Otherwise, the whole string comparison stuff with try_skip_word()
    won't work.
 
-   Basically, the scanner looks for lines ending in " is" and regards
-   the first word as the feature name. Because of that, only feature
-   routines are recognized and simple feature attributes are ignored.
-   This is just like in most other scanners, where you only see
-   function declarations, but no variables.
-
    Use "dmake" to compile.
 
 SYNTAX PARSER
 
    The syntax parser is a lot more complicated. Most of the source
    files are from Dietmar Eilert's examples and have not been touched
-   at all.
+   much.
 
    Changed or added files are:
 
       funcs.c - Implements the actual parser.
 
+      keyword.c - Functions to read the keyword file into an array.
+
       language.c - A couple of string functions used for detection of
       reserved word and some other syntax elements. Also declares
-      several arrays for the various character classes. However, the
-      parser does not yet invoke all this.
+      several arrays for the various character classes.
 
       tag.a - Declares symbols with the name of parser (_LibName and
       LibId). If these do not match the name in funcs.c, the parser
       won't show up in the configuration window.
 
+      lib.c - Library wanking. My only change was to open
+      intuition.library to be able to display error messages.
+
    Use "dmake" to compile.
+
+TEST PROGRAMS
+
+   There are a few files named test_#?.c. I used to compile them with
+   SAS/c instead of DICE because of the less unstable debugger. That's
+   why there also is a SCOPTIONS in every directory. The test programs
+   don't need any register and linker magic and write their results to
+   stdout. No need to flush anything afterwards.
 
 Thomas.
 

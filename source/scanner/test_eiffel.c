@@ -1,4 +1,5 @@
-/* test_eiffel.c -- Test ScanHandlerEiffel. */
+/* test_eiffel.c -- Test ScanHandlerEiffel.
+ * Copyright 1999 Thomas Aglassinger and others, see file "forum.txt" */
 
 #include <stdio.h>
 #include <string.h>
@@ -36,12 +37,14 @@ static void test_handler(char *text)
 
 int main(void)
 {
-   test_handler("sepp(hugo: INTEGER) is");
-   test_handler("sepp is");
-   test_handler("-- Don't show up because this is");  /* a comment */
-   test_handler("frozen sepp(hugo: INTEGER) is");
-   test_handler("frozen conforms_to(other: GENERAL): BOOLEAN is");
-   test_handler("infix \"#<<\"(s: INTEGER): like Current is");
-   test_handler("frozen infix \"+\"(s: INTEGER): like Current is");
+   test_handler("   sepp(hugo: INTEGER) is");
+   test_handler("   description: \"that's it\"");
+   test_handler("   sepp, hugo, resi is");
+   test_handler("   sepp is");
+   test_handler("   -- Don't show up because this is");  /* a comment */
+   test_handler("   frozen sepp(hugo: INTEGER) is");
+   test_handler("   frozen conforms_to(other: GENERAL): BOOLEAN is");
+   test_handler("   infix \"#<<\"(s: INTEGER): like Current is");
+   test_handler("   frozen infix \"+\"(s: INTEGER): like Current is");
    return 0;
 }

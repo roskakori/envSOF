@@ -1,13 +1,11 @@
-; $VER: Installer 1.0 (24.1.99)
+; install - Installer script for Eiffel/Sofa mode.
+; Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
 ;
-; An Amiga Installer for the SmallEiffel mode for GoldEd
-;
-; Copyright © 1999 Thomas Aglassinger. All rights reserved.
+; $VER: Install 2.1 (10.10.1999)
 
-;----------------------------------------------------------------------------
-; Specify minimum installer version
-;----------------------------------------------------------------------------
-(debug "set version")
+
+; Ensure that minimum installer version to be installed
+
 (set #minimum-installer-version 43)
 (set #minimum-installer-revision 3)
 (set #minimum-installer-id
@@ -18,199 +16,265 @@
 (debug "  minimum-installer-id = " #minimum-installer-id)
 (debug "  current-installer-id = " @installer-version)
 
-;----------------------------------------------------------------------------
-; Setup messages, prompts and help text
-;----------------------------------------------------------------------------
+(if (< @installer-version #minimum-installer-id)
+  (
+    (set #message-wrong-installer
+    (cat "You have an old version of the program `Installer' on your Amiga!\n\n"
+         "The installation procedure needs at least Installer "
+         #minimum-installer-version "." #minimum-installer-revision ".\n\n"
+         "Please obtain a newer version!\n\n"
+         "(Check Aminet or the WWW site of the current owner of the rights for "
+         "Amiga - whoever that might be right now.)"
+    ))
 
-(set #message-wrong-installer
-(cat "You have an old version of the program 'Installer' on your Amiga!\n\n"
-     "The installation procedure needs at least Installer "
-     #minimum-installer-version "." #minimum-installer-revision ".\n\n"
-     "Please obtain a newer version!\n\n"
-     "(Check Aminet or "
-     "the WWW site of the current owner of the rights for Amiga.)"
+    (debug "installer too old")
+    (abort #message-wrong-installer)
+  )
+)
+
+(set #damage-estimation
+(cat "Without it, most functions of the Toolbar will not work. "
+     "Nevertheless, the syntax parser and scanner will be available.\n\n"
+     "Refer to the manual to learn from where to download it."
 ))
 
-(set #message-welcome
-(cat "Welcome to the Amiga Installer for GedEiffel\n\n"
-     "This will install a SmallEiffel mode for GoldEd. It features a "
-     "syntax parser, a routine scanner and  a toolbar for some common "
-     "functions."
-))
-
-(set #update-registry-manually
-(cat "There has been a minor problem:\n\n"
-     "Because the registry editor has not been installed, the Eiffel "
-     "filetype could not have been created automatically. Thus, you "
-     "have to do it manually. However, this is no difficult:\n\n"
-     "Simply create a new filetype for \"*.e\" and assign all the "
-     "eiffel.* presets to it.\n\n"
-     "Refer to the GoldEd manual for details on how to perform these steps."
-))
-
-(set #message-exit
-(cat "\nThe SmallEiffel mode has been installed.\n\n"
-     "Please restart GoldEd."
-))
-
-(set #message-wrong-golded
-(cat "This script requires GoldED 4.7.\n\n"
-     "If you are using GoldEd 5 or later, download "
-     "aminet:text/edit/envSOF*.lha"
-))
-
-
-;----------------------------------------------------------------------------
-; Check requirements
-;----------------------------------------------------------------------------
-
-; Check installer version to piss people off and make them
-; download a new one or forget about the whole thing - He he he.
-; (The script should work with older versions, but how am I
-; supposed to test this?)
-;
-; After that, check for GoldEd 4.7 to piss off users of GoldEd 5.
-
-(procedure P-check-requirements
-(
-   (debug "check installer version")
-   (if (< @installer-version #minimum-installer-id)
-     (
-       (debug "installer too old")
-       (abort #message-wrong-installer)
-     )
+; Check if rexxdossupport is installed
+(if (NOT (exists "libs:rexxdossupport.library" (noreq)))
+   (
+      (set #message-rexxdos-missing
+      (cat "For the add-on to work properly, "
+           "the file \"rexxdossupport.library\" must be installed in the "
+           "\"libs:\" drawer.\n\n"
+           #damage-estimation
+      ))
+      (message #message-rexxdos-missing (all))
    )
+)
 
-   (debug "check golded version")
-   (set #golded-installed 0)
-   (if (exists "GOLDED:" (NOREQ))
+; Check if Sofa is installed
+(if (NOT (exists "Sofa:" (noreq)))
+   (
+      (set #message-sofa-missing
+      (cat "For the add-on to work properly, "
+           "the Sofa distribution of the SmallEiffel compiler must be "
+           "installed in the \"Sofa:\" drawer.\n\n"
+           #damage-estimation
+      ))
+      (message #message-sofa-missing (all))
+   )
+)
+
+
+(delopts "oknodelete" "force" "askuser")
+
+(complete 0)
+
+(onerror
+   (if (> @ioerr 0)
       (
-         (set #golded-version (getversion "golded:golded"))
-
-         (set #version-high (/ #golded-version 65536))
-         (set #version-low (- #golded-version (* #version-high 65536)))
-
-         (set #version-by-ten (+ (* 10 #version-high) #version-low))
-
-         (if (= #version-by-ten 47) (set #golded-installed 1))
+         (delete "env:INSTALLOPTIONS")
+         (message "An error has occurred. Please contact the author.")
       )
    )
+)
 
-   (if (= 0 #golded-installed) (abort #message-wrong-golded))
-))
+; initialize return code
 
+(textfile (dest "env:COMPONENTINSTALL") (append "INCOMPLETE"))
 
-;----------------------------------------------------------------------------
-; Welcome user
-;----------------------------------------------------------------------------
-(procedure P-welcome
-(
-   (debug "welcome")
-   (welcome #message-welcome)
-))
+; initialize strings
 
-;----------------------------------------------------------------------------
-; Copy files
-;----------------------------------------------------------------------------
-(procedure P-copy-files
-(
-   (debug "copy-files")
-   (copylib
-      (prompt "Copy syntax parser")
-      (source "syntax/eiffel.parser")
-      (dest "golded:syntax")
-      (confirm)
-      (help @copylib-help)
-   )
+(set #golded_version "6.2.0")
+(set #golded_version_id 62)
 
-   (complete 20)
-   (copylib
-      (prompt "Copy routine scanner")
-      (source "scanner/eiffel")
-      (dest "golded:parser")
-      (confirm)
-      (help @copylib-help)
-   )
+(if (= @language "deutsch")
+    (
+       (set #eiffel_uninstalling "Die Eiffel-Erweiterung wird entfernt ...")
+       (set #eiffel_badversion   (cat "Diese Software benötigt GoldED " #golded_version " !"))
+       (set #eiffel_welcome      "Willkommen beim Setup für die Eiffel-Erweiterung !")
+       (set #eiffel_install      "Installieren")
+       (set #eiffel_uninstall    "Entfernen")
+       (set #eiffel_golded       "Bitte installieren Sie GoldED, bevor Sie diese Installation ausführen !")
+       (set #eiffel_language     "Einige Komponenten dieser Erweiterung liegen in verschiedenen Sprachversionen vor. Wählen Sie eine Sprache aus:")
+       (set #eiffel_registry     "Registry wird aktualisiert...")
+    )
+    (
+       (set #eiffel_uninstalling "Uninstalling Eiffel add-on ...")
+       (set #eiffel_badversion   (cat "This software requires GoldED " #golded_version " !"))
+       (set #eiffel_welcome      "Welcome to the setup for the Eiffel add-on !")
+       (set #eiffel_install      "Install")
+       (set #eiffel_uninstall    "Uninstall")
+       (set #eiffel_golded       "Please install GoldED before you install this add-on !")
+       (set #eiffel_language     "Some components of this software support multiple languages. Choose a language:")
+       (set #eiffel_registry     "Updating registry ...")
+    )
+)
 
-   (complete 30)
-   (makedir "golded:tools/eiffel/arexx")
-   (foreach "tools/eiffel/arexx" "#?"
-      (copylib
-         (prompt "Copy ARexx scripts")
-         (source (tackon "tools/eiffel/arexx" @each-name))
-         (dest "golded:tools/eiffel/arexx")
-         (confirm)
-         (help @copylib-help)
-      )
-   )
+(if (exists "golded:" (NOREQ))
+   (
+      (set vernum (getversion "golded:golded"))
+      (set ver (/ vernum 65536))
+      (set rev (- vernum (* ver 65536)))
+      (set version (+ (* 10 ver) rev))
 
-   (complete 40)
-   (copyfiles
-      (prompt "Copy manual")
-      (source "Manual.guide")
-      (dest "golded:tools/eiffel")
-      (confirm)
-      (help @copyfiles-help)
-   )
-
-   (complete 50)
-   (copyfiles
-      (prompt "Copy toolbar icons")
-      (source "toolbar/eiffel")
-      (dest "golded:toolbar/eiffel")
-      (confirm)
-      (all)
-      (help @copyfiles-help)
-   )
-))
-
-;----------------------------------------------------------------------------
-; Copy presets
-;----------------------------------------------------------------------------
-(procedure P-copy-presets
-(
-   (debug "copy-presets")
-   (if (exists("golded:tools/regedit/regedit"))
-      (
-         (working "Updating registry...")
-         (run "golded:tools/regedit/regedit script=install.bat")
-      )
-      (
-         (copyfiles
-            (prompt "Copy eiffel.* presets")
-            (source "presets")
-            (dest "golded:presets")
-            (confirm)
-            (all)
-            (help @copyfiles-help)
+      (if (< version #golded_version_id)
+         (
+            (message #eiffel_badversion)
          )
-         (message #update-registry-manually)
+      )
+
+      ; read command passed in to our script in the env variable INSTALLOPTIONS
+      (if (exists "env:INSTALLOPTIONS" (noreq))
+         ; (getenv) may not be used without checking if var exists (installer bug)
+         (
+            (set eiffel_installmode (getenv "INSTALLOPTIONS"))
+            (if (= eiffel_installmode "UNINSTALL")
+               (working #eiffel_uninstalling)
+               (message #eiffel_welcome)
+            )
+         )
+         (set eiffel_installmode "ASK")
+      )
+
+      (if (= eiffel_installmode "ASK")
+         (if
+            (askbool
+               (prompt #eiffel_welcome)
+               (choices
+                  #eiffel_install
+                  #eiffel_uninstall
+               )
+               (help @askbool_help)
+            )
+
+            (set eiffel_installmode "INSTALL")
+            (set eiffel_installmode "UNINSTALL")
+         )
+      )
+
+      (delete "env:INSTALLOPTIONS")
+
+      ; verify directory structure
+
+      (makedir "golded:etc")
+      (makedir "golded:etc/api")
+      (makedir "golded:etc/syntax")
+      (makedir "golded:etc/images")
+      (makedir "golded:etc/images/toolbar")
+      (makedir "golded:etc/scanner")
+      (makedir "golded:etc/uninstall")
+      (makedir "golded:add-ons")
+
+      ; install registry editor (if not yet installed)
+
+      (if (exists "golded:add-ons/regedit")
+         (
+            (set oldver (getversion "golded:add-ons/regedit/regedit"))
+            (set newver (getversion "regedit/regedit"))
+            (if (> newver oldver)
+               (copyfiles
+                  (source "regedit")
+                  (dest "golded:add-ons/regedit")
+                  (all)
+                  (nogauge)
+               )
+            )
+         )
+         (copyfiles
+            (source "regedit")
+            (dest "golded:add-ons/regedit")
+            (all)
+            (nogauge)
+         )
+      )
+
+      (if (= eiffel_installmode "UNINSTALL")
+
+         ; uninstall
+         (
+            ; update registry
+            (working #eiffel_registry)
+            (if (exists ("golded:etc/uninstall/envSOF20.bat"))
+               (
+                   (run "golded:add-ons/regedit/regedit script=golded:etc/uninstall/envSOF20.bat label=uninstall")
+                   (delete "golded:etc/uninstall/envSOF20.bat")
+               )
+               (run "golded:add-ons/regedit/regedit script=install.bat label=uninstall")
+            )
+            (exit (quiet))
+         )
+
+         ; install
+         (
+            (if (= eiffel_installmode "ASK")
+               (welcome)
+            )
+
+            ; install basic files
+            (makedir "golded:add-ons/eiffel")
+            (copyfiles
+               (source "eiffel")
+               (dest "golded:add-ons/eiffel")
+               (all)
+            )
+
+            (set eiffel_language "english")
+
+            ; install manual
+            (copylib
+               (source "Manual.guide")
+               (dest "golded:add-ons/eiffel")
+            )
+            (copyfiles
+               (source "forum.txt")
+               (dest "golded:add-ons/eiffel")
+            )
+
+            ; install scanner
+            (copylib
+               (source "scanner/eiffel")
+               (dest "golded:etc/scanner")
+            )
+
+            ; install template
+            (makedir "golded:add-ons/eiffel/template")
+            (copylib
+               (source "template/new_class.e")
+               (dest "golded:add-ons/eiffel/template")
+            )
+
+            ; install toolbar images
+            (copyfiles
+                (source "toolbar")
+                (dest "golded:etc/images/toolbar")
+                (all)
+            )
+
+            ; update registry
+            (working #eiffel_registry)
+            (run (cat "golded:add-ons/regedit/regedit script=install.bat ARGS " eiffel_language))
+
+            ; prepare uninstallation
+            (copyfiles
+               (source "install.bat")
+               (dest "golded:etc/uninstall")
+               (newname "envSOF20.bat")
+            )
+
+            ; installation completed
+            (textfile (dest "env:COMPONENTINSTALL") (append "OK"))
+            (complete 100)
+            (set @default-dest "golded:add-ons/eiffel")
+            (if (= eiffel_installmode "INSTALL")
+               (exit)
+               (exit (quiet))
+            )
+         )
       )
    )
-))
 
-;----------------------------------------------------------------------------
-; Exit
-;----------------------------------------------------------------------------
-(procedure P-exit
-(
-   (debug "exit")
+   ; no GoldEd installed
+   (message #eiffel_golded)
+)
 
-   (message (#message-exit) (all))
-   (exit (quiet))
-))
-
-;----------------------------------------------------------------------------
-; Do it!
-;----------------------------------------------------------------------------
-
-(complete   0) (P-check-requirements)
-
-(complete   0) (P-welcome)
-
-(complete  10) (P-copy-files)
-
-(complete  60) (P-copy-presets)
-
-(complete 100) (P-exit)
-
+(exit (quiet))

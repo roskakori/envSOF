@@ -1,0 +1,86 @@
+/*
+ * short.ged -- Show (cached) short form of class name under cursor.
+ *
+ * Copyright (C) 1999 Thomas Aglassiner <agi@sbox.tu-graz.ac.at>
+ * Freeware. Use at your own risk.
+ */
+version_info = "$VER: short.ged 1.3 (15.8.99)"
+
+OPTIONS RESULTS                             /* enable return codes     */
+
+if (LEFT(ADDRESS(), 6) ~= "GOLDED") then    /* not started by GoldEd ? */
+    address 'GOLDED.1'
+
+'LOCK CURRENT RELEASE=6'                    /* lock GUI, gain access   */
+
+if (RC ~= 0) then
+    exit
+
+OPTIONS FAILAT 21
+
+SIGNAL ON SYNTAX                            /* ensure clean exit       */
+
+rexx_path = 'GoldEd:add-ons/eiffel/rexx/'
+update_command_script = rexx_path || 'update_short.rexx'
+
+Call AddLib('rexxdossupport.library', 0, -30, 2)
+
+'QUERY WORD VAR=class_name'
+
+legal_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ_1234567890'
+IF (Strip(Upper(class_name), 'B', legal_letters) = '') ,
+   & (class_name ~= '') THEN ,
+DO
+   temporary_file = 't:finder.tmp'
+
+   ADDRESS COMMAND 'finder >' || temporary_file || ' ' || class_name
+
+   class_path = ''
+   IF RC = 0 THEN DO
+      IF OPEN('full_path', temporary_file, 'read') THEN DO
+         class_path = READLN('full_path')
+         CALL CLOSE('full_path')
+      END
+   END
+   CALL DELETE(temporary_file)
+
+   IF class_path = '' THEN DO
+      Call view_class_error('Find Class Error')
+   END
+   ELSE DO
+      separator_index = Max(LastPos(':', class_path), LastPos('/', class_path))
+      short_path = Left(class_path, separator_index) || 'sofa/short/' || SubStr(class_path, separator_index + 1)
+
+      update_command = update_command_script || ' "' || class_path || '" Quiet Port="' || Address() || '"'
+      Address Command 'rx ' || update_command
+
+      IF RC = 0 THEN DO
+         'WINDOW FORCE USE="' || short_path || '"'
+      END
+      ELSE DO
+          Call view_class_error('Short Error')
+      END
+   END
+END
+ELSE DO
+   'REQUEST TITLE="Short Error" PROBLEM="Cursor must be placed over a proper class name (all upper-case)."'
+END
+
+'UNLOCK' /* unlock GUI */
+exit
+
+/* View class error message */
+view_class_error:
+   Parse Arg title
+   'REQUEST STATUS=""'
+   'REQUEST TITLE="' || title || '" PROBLEM="Cannot find class ''' || class_name || '''.*NMake sure that*N· the current directory of GoldEd is the same as for the compiler,*N· the class path (loadpath.se) is set properly*N· the class name is typed properly and the file exists.*N"'
+   Return
+
+/* Syntax error handler */
+SYNTAX:
+   SAY "Syntax error line" SIGL ":" ERRORTEXT(RC)
+   'UNLOCK'
+
+   exit
+
+

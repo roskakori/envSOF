@@ -1,0 +1,89 @@
+/* new_class.ged -- Create new Eiffel class using template.
+ *
+ * $VER: new_class.ged 1.0 (29.8.99)
+ */
+
+template_file = 'GoldEd:add-ons/eiffel/template/new_class.e'
+
+OPTIONS RESULTS
+
+if (LEFT(ADDRESS(), 6) ~= 'GOLDED') then
+
+    address 'GOLDED.1'
+
+'LOCK CURRENT RELEASE=6'
+
+if (RC ~= 0) then
+    exit
+
+OPTIONS FAILAT 6
+
+SIGNAL ON SYNTAX
+
+'REQUEST VAR=class_name STRING TITLE="New class..." BODY="Type name of new class*N(Without path or .e suffix)"'
+if RC = 0 then do
+   digits_and_underscore =  '_1234567890'
+   lower_letters = 'abcdefghijklmnopqrstuvwxyz'
+   upper_letters = Upper(lower_letters)
+
+   /* Validate class name */
+   error_message = ''
+   if Verify(class_name, lower_letters || upper_letters || digits_and_underscore) ~= 0 then do
+      error_message = 'Class name must only contain letters, numbers and underscores (_)'
+   end
+   else if Pos(Left(class_name, 1), digits_and_underscore) > 0 then do
+      error_message = 'Numbers and underscore (_) must occur after the first letter'
+   end
+
+   if error_message = '' then do
+      class_name = Upper(class_name)
+      class_file = Translate(class_name, lower_letters, upper_letters) || '.e'
+
+      /* Remember state of search requester */
+      'QUERY NAME=FIND VAR=old_find'
+      'QUERY NAME=RPLC VAR=old_replace'
+
+      'OPEN NEW QUIET SMART NAME="' || class_file || '"'
+      'WINDOW FORCE USE="' || class_file || '"'
+
+      'OPEN INSERT NAME="' || template_file || '"'
+
+      /* Replace all occurrences of "%/CLASS/" by `class_name' */
+      'REPLACE ALL QUIET STRING="%/CLASS/" BY="' || class_name || '"'
+
+      /* Remove all lines with the word "%/DELETE/" in it. */
+      'GOTO TOP COLUMN=1'
+      found = 1
+      do while found
+         'FIND FIRST QUIET STRING="%/DELETE/"'
+         found = RC = 0
+         if found then do
+            'DELETE LINE'
+         end
+      end
+
+      /* Goto position marked with "%/CURSOR/ and remove keyword */
+      'REPLACE ALL QUIET STRING="%/CURSOR/" BY=""'
+
+      /* Restore state of search requester */
+      'FIX VAR=old_find'
+      'FIX VAR=old_replace'
+      'SET NAME=FIND VALUE="' || old_find || '"'
+      'SET NAME=RPLC VALUE="' || old_replace || '"'
+   end
+   else do
+      /* Class name contains invalid character */
+      'REQUEST PROBLEM="' || error_message || '."'
+   end
+end
+
+'UNLOCK'
+
+exit
+
+SYNTAX:
+
+SAY 'Error in line' SIGL ':' ERRORTEXT(RC)
+
+'UNLOCK'
+

@@ -1,3 +1,9 @@
+/*
+ * language.h
+ *
+ * Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
+ */
+
 // Syntax levels
 #define SYNTAX_TEXT          0          // normal text
 #define SYNTAX_COMMENT       1          // comments
@@ -9,7 +15,6 @@
 #define SYNTAX_DECLARATION   8          // features declaration
 #define SYNTAX_BAD           7 /* !! */ // bad names JavaLikeCrap
 
-void setup_char_array(void);
-int get_word_type(const char *text, ULONG word_start, ULONG word_end);
+#define SYNTAX_MAXIMUM       8 /* !! */
 
 

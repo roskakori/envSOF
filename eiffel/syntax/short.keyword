@@ -1,0 +1,46 @@
+-- Eiffel short form reserved names and words
+-- $VER: short.keyword 1.0 (26.8.99)
+Current
+False
+Precursor
+Result
+True
+Void
+alias
+all
+and
+check
+class
+creation
+debug
+deferred
+do
+else
+end
+ensure
+expanded
+feature
+from
+frozen
+implies
+indexing
+infix
+interface
+invariant
+like
+not
+obsolete
+of
+-- for "end of CLASS"
+old
+once
+or
+prefix
+require
+separate
+strip
+then
+variant
+xor
+
+

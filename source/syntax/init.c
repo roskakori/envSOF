@@ -1,11 +1,12 @@
 #include "defs.h"
 
-/// "Prototypes"
+/// "prototypes"
 
-Prototype void InitC(void);
+Prototype BOOL InitC(void);
+Prototype void ExitC(void);
 
 ///
-/// "Init"
+/// "init"
 
 /* ----------------------------------- InitC -----------------------------------
 
@@ -13,10 +14,26 @@ Prototype void InitC(void);
 
 */
 
-void
+BOOL
 InitC(void)
+{
+    return(TRUE);
+}
+
+///
+/// "init"
+
+/* ----------------------------------- ExitC -----------------------------------
+
+ Library startup code (C entry point).
+
+*/
+
+void
+ExitC(void)
 {
     ;
 }
 
 ///
+

@@ -1,25 +1,23 @@
-#ifndef TEST_STRING_STUFF
-#define TEST_STRING_STUFF 0
-#endif
+/*
+ * language.c -- Programing language specific functions
+ *
+ * Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
+ */
 
-typedef unsigned long ULONG;
+#include "defs.h"
+
+#include "debug.h"
+#include "language.h"
+#include "keyword.h"
 
 #include <stdlib.h>
 
-#if TEST_STRING_STUFF
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-
-#define DD(x) x
-#define bbug  printf
-#else
-#define assert(x)
-#define DD(x)
-#define bbug
-#endif
-
-#include "language.h"
+Prototype void setup_char_array(void);
+Prototype int fstrncmp(const char *s1, const char *s2, ULONG n);
+Prototype int is_reserved_word(const char *word, ULONG word_start, ULONG word_end, struct keyword_info *info);
+Prototype int is_reserved_name(const char *name, ULONG name_start, ULONG name_end, struct keyword_info *info);
+Prototype int get_word_type(const char *text, ULONG word_start, ULONG word_end, struct keyword_info *info);
+Prototype char *get_word_type_text(int word_type);
 
 /// "Eiffel words"
 
@@ -50,80 +48,6 @@ char is_upper[256] =
 
 char is_lower[256] =
 {0};
-
-/*
- * IMPORTANT: These lists have to be sorted because they are searched binary!
- */
-const char *reserved_word[] =
-{
-   "alias",
-   "all",
-   "and",
-   "as",
-   "check",
-   "class",
-   "creation",
-   "debug",
-   "deferred",
-   "do",
-   "else",
-   "elseif",
-   "end",
-   "ensure",
-   "expanded",
-   "export",
-   "external",
-   "feature",
-   "from",
-   "frozen",
-   "if",
-   "implies",
-   "indexing",
-   "infix",
-   "inherit",
-   "inspect",
-   "invariant",
-   "is",
-   "like",
-   "local",
-   "loop",
-   "not",
-   "obsolete",
-   "old",
-   "once",
-   "or",
-   "prefix",
-   "redefine",
-   "rename",
-   "require",
-   "rescue",
-   "retry",
-   "select",
-   "separate",
-   "strip",
-   "then",
-   "undefine",
-   "until",
-   "variant",
-   "when",
-   "xor",
-   NULL
-};
-
-const char *reserved_name[] =
-{
-   "Current",
-   "False",
-   "Precursor",
-   "Result",
-   "True",
-   "Unique",
-   "Void",
-   NULL
-};
-
-const int RESERVED_WORD_COUNT = (sizeof(reserved_word) / sizeof(char *)) - 1;
-const int RESERVED_NAME_COUNT = (sizeof(reserved_name) / sizeof(char *)) - 1;
 
 void setup_char_array(void)
 {
@@ -198,8 +122,8 @@ int fstrncmp(const char *s1, const char *s2, ULONG n)
       return 0;
 }
 
-char *fsearch(const char *text, ULONG word_start, ULONG word_end,
-              const char *base[], const int maximum_count)
+static char *fsearch(const char *text, ULONG word_start, ULONG word_end,
+              const char *base[], const ULONG maximum_count)
 {
    const char *word = &text[word_start];
    ULONG word_length = word_end - word_start;
@@ -208,11 +132,11 @@ char *fsearch(const char *text, ULONG word_start, ULONG word_end,
    int c;
    int d;
 
-   DD(bbug("  fsearch(\"%s\",%ld) in %d\n", word, word_length, maximum_count));
+   DD(bug("  fsearch(\"%s\",%ld) in %d\n", word, word_length, maximum_count));
    for (;;)
    {
       c = (a + b) / 2;
-      //DD(bbug("  %2d [%2d,%2d]: %s\n", c, a, b, reserved_word[c]));
+      //DD(bug("  %2d [%2d,%2d]: %s\n", c, a, b, reserved_word[c]));
       if ((d = fstrncmp(word, base[c], word_length)) == 0)
          return base[c];
       if (c == a)
@@ -225,17 +149,17 @@ char *fsearch(const char *text, ULONG word_start, ULONG word_end,
    return NULL;
 }
 
-int is_reserved_word(const char *word, ULONG word_start, ULONG word_end)
+int is_reserved_word(const char *word, ULONG word_start, ULONG word_end, struct keyword_info *info)
 {
-   return (fsearch(word, word_start, word_end, reserved_word, RESERVED_WORD_COUNT) != NULL);
+   return ((is_lower[word[word_start]]) && (fsearch(word, word_start, word_end, info->word, info->word_count) != NULL));
 }
 
-int is_reserved_name(const char *name, ULONG name_start, ULONG name_end)
+int is_reserved_name(const char *name, ULONG name_start, ULONG name_end, struct keyword_info *info)
 {
-   return (fsearch(name, name_start, name_end, reserved_name, RESERVED_NAME_COUNT) != NULL);
+   return ((is_upper[name[name_start]]) && (fsearch(name, name_start, name_end, info->word, info->word_count) != NULL));
 }
 
-int get_word_type(const char *text, ULONG word_start, ULONG word_end)
+int get_word_type(const char *text, ULONG word_start, ULONG word_end, struct keyword_info *info)
 {
    int word_type = SYNTAX_TEXT;
    ULONG word_index = word_start;
@@ -243,7 +167,7 @@ int get_word_type(const char *text, ULONG word_start, ULONG word_end)
    if (is_lower[text[word_start]])
    {
       // first letter lower case
-      if (is_reserved_word(text, word_start, word_end))
+      if (is_reserved_word(text, word_start, word_end, info))
       {
          word_type = SYNTAX_KEYWORD;
       }
@@ -263,7 +187,7 @@ int get_word_type(const char *text, ULONG word_start, ULONG word_end)
    else
    {
       // first letter upper case
-      if (is_reserved_name(text, word_start, word_end))
+      if (is_reserved_name(text, word_start, word_end, info))
       {
          word_type = SYNTAX_RESERVED_WORD;
       }
@@ -333,89 +257,3 @@ char *get_word_type_text(int word_type)
    return type_text;
 }
 
-#if TEST_STRING_STUFF
-
-
-void test_word_types(char *text)
-{
-   ULONG indent = 0;
-   ULONG length = strlen(text);
-   ULONG word_start = 0;
-   ULONG word_end = 0;
-   int was_abnormal = 1;
-
-   printf("test_word_types(\"%s\")\n", text);
-   for (indent = 0; indent < length; indent++)
-   {
-      if (was_abnormal)
-      {
-         if (is_normal[text[indent]]) {
-            was_abnormal = 0;
-            word_start = indent;
-         }
-      }
-      else if (!is_normal[text[indent]]) {
-         char buffer;
-
-         word_end = indent;
-
-         buffer = text[word_end];
-         text[indent] = 0;
-         printf("  %2ld-%2d: \"%s\"\n", word_start, word_end-1, &text[word_start]);
-         text[word_end] = buffer;
-
-         printf("         %s\n",
-                get_word_type_text(get_word_type(text, word_start, word_end)));
-
-         word_start = indent;
-         was_abnormal = 1;
-      }
-   }
-}
-
-void test_is_reserved_word(char *text, ULONG word_start, ULONG word_end, int is)
-{
-   int actual_is;
-
-   printf("is_reserved_word(\"%s\", %ld,%ld)\n", text, word_start, word_end);
-   actual_is = is_reserved_word(text, word_start, word_end);
-   printf("  -> %d\n", actual_is);
-   assert(actual_is == is);
-}
-
-int main(int argc, char *argv[])
-{
-   setup_char_array();
-
-   printf("%d reserved words: \"%s\"..\"%s\"\n", RESERVED_WORD_COUNT,
-          reserved_word[0], reserved_word[RESERVED_WORD_COUNT - 1]);
-
-   printf("word_type(is)   = %d\n", get_word_type("is", 0, 2));
-   printf("word_type(Sepp) = %d\n", get_word_type("Sepp", 0, 4));
-   printf("is_alpha: a b 1 _ !   ä\n"
-          "          %d %d %d %d %d %d %d\n",
-                    is_alpha['a'],
-                    is_alpha['b'],
-                    is_alpha['1'],
-                    is_alpha['_'],
-                    is_alpha['!'],
-                    is_alpha[' '],
-                    is_alpha[(unsigned char) 'ä']);
-   printf("fsc(index,indexing) = %d\n", fstrncmp("index", "indexing", 5));
-   printf("fsc(class,class) = %d\n", fstrncmp("class", "class", 5));
-
-#if 1
-   test_is_reserved_word("sepp", 0, 4, 0);
-   test_is_reserved_word("old stuff", 0, 3, 1);
-   test_is_reserved_word("alias", 0, 5, 1);
-   test_is_reserved_word("index", 0, 5, 0);
-   test_is_reserved_word("pri", 0, 3, 0);
-   test_is_reserved_word("xor", 0, 3, 1);
-
-   test_word_types("  sepp := old sepp+Ranz_hanz;   "
-                   "  class HUGO feature is nothing;");
-#endif
-
-   return 0;
-}
-#endif

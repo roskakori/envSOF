@@ -1,6 +1,8 @@
 # Eiffel scanner DMakefile
+#
+# Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
 
-SCANNER= golded:add-ons/eiffel/scanner/eiffel
+SCANNER= golded:etc/scanner/eiffel
 TESTER = test_eiffel
 SOURCE = eiffel.c
 

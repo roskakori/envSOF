@@ -1,16 +1,17 @@
-Short:    SmallEiffel mode for GoldEd 4
+Short:    Eiffel/Sofa Add-On for GoldEd Studio 6
 Uploader: Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
 Author:   Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
 Type:     text/edit
-Kurz:     SmallEiffel Modus für GoldEd 4
+Kurz:     Eiffel/Sofa Erweiterung für GoldEd Studio 6
+Version:  2.0
 
 TITLE
 
-  GedEiffel
+  envSOF20
 
 VERSION
 
-  1.3
+  2.0
 
 AUTHOR
 
@@ -18,29 +19,33 @@ AUTHOR
 
 DESCRIPTION
 
-  GedEiffel is a SmallEiffel mode for GoldEd 4. It consists of syntax
-  parser, routine scanner, toolbar and a couple of ARexx scripts to
-  interface `finder' and `pretty'.
+  This is an Eiffel/Sofa add-on for GoldEd Studio 6. It consists of
+  syntax parser, feature scanner, toolbar and a couple of ARexx
+  scripts to interface with the Sofa distribution of the SmallEiffel
+  compiler.
 
 FEATURES
 
-  Colorful, pratical and free.
+  Colorful, practical and free.
 
 NEW FEATURES
 
-  The documentation reflects the unsupported nature of this package,
-  as GoldEd 4 is outdated. For a supported version, you need GoldEd 5
-  (or later) and aminet:text/edit/envSOF*.lha.
+  - Mouse'n'browse by Control/Shift double-click on class names
+  - Added script to create new class from a template file
+  - Added support for syntax parser to read keywords from external
+    file, allowing better highlighting of short forms.
 
 SPECIAL REQUIREMENTS
 
-  - GoldEd, version 4
+  - Sofa/SmallEiffel, available from http://www.owlnet.net/amiga/sofa/.
 
-  - SmallEiffel, available from aminet:dev/lang/SmallEiffel*.lha.
+  - rexxdossupport.library, available from aminet:util/rexx/
+
+  - GoldEd Studio 6, available from http://members.tripod.com/golded/.
 
 AVAILABILITY
 
-  aminet:text/edit/GedEiffel.lha
+  aminet:text/edit/envSOF20.lha
 
 PRICE
 

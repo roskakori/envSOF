@@ -1,0 +1,94 @@
+/*
+ * view_as.ged -- Open (cached) class in same window in a different view
+ *
+ * Copyright (C) 1999 Thomas Aglassiner <agi@sbox.tu-graz.ac.at>
+ * Freeware. Use at your own risk.
+ */
+version_info = "$VER: view_as_short.ged 1.0 (20.8.99)"
+
+Call AddLib('rexxsupport.library', 0, -30, 0)
+Call AddLib('rexxdossupport.library', 0, -30, 0)
+
+OPTIONS RESULTS                             /* enable return codes     */
+
+if (LEFT(ADDRESS(), 6) ~= "GOLDED") then    /* not started by GoldEd ? */
+    address 'GOLDED.1'
+
+'LOCK CURRENT RELEASE=6'                    /* lock GUI, gain access   */
+
+if (RC ~= 0) then
+    exit
+
+OPTIONS FAILAT 21
+
+SIGNAL ON SYNTAX                            /* ensure clean exit       */
+
+/* Set default options */
+template = 'Mode/A,Options/F'
+cli.mode = ''
+cli.options = ''
+
+/* Check Arguments */
+argument_error = ''
+Parse Arg arguments
+if ~ReadArgs(arguments, template, 'cli.') then do
+   argument_error =  Fault(RC) || '*N(Template is ' || template || ')'
+end
+
+cli.mode = Upper(cli.mode)
+if Index("CLASS SHORT", cli.mode) = 0 then do
+   argument_error = 'MODE must be one of CLASS or SHORT'
+end
+
+if argument_error ~= '' then do
+   'REQUEST TITLE="Error in arguments to view_as.ged" PROBLEM="' || argument_error || '"'
+   Call cleanup
+end
+
+/* Start being productive */
+rexx_path = 'GoldEd:add-ons/eiffel/rexx/'
+update_command_script = rexx_path || 'update_short.rexx'
+
+'QUERY DOC VAR=class_path'
+
+separator_index = max(lastpos(':', class_path), lastpos('/',  class_path)) + 1
+Parse Var class_path class_directory =separator_index class_name
+
+if cli.mode = 'CLASS' then do
+   cache_index = LastPos('sofa/', class_directory) - 1
+   real_directory = Left(class_directory, cache_index)
+   class_path = real_directory || class_name
+   'OPEN NAME="' || class_path || '"'
+end
+else if cli.mode = 'SHORT' then do
+   short_path = class_directory || 'sofa/short/' || class_name
+   update_command = update_command_script || ' "' || class_path || '" Quiet Port="' || Address() || '"'
+   Address Command 'rx ' || update_command
+   if RC = 0 then do
+      'OPEN NAME="' || short_path || '"'
+   end
+   else do
+       Call view_class_error('View as short Error')
+   end
+end
+
+CLEANUP:
+
+'UNLOCK' /* unlock GUI */
+exit
+
+/* View class error message */
+view_class_error:
+   Parse Arg title
+   'REQUEST STATUS=""'
+   'REQUEST TITLE="' || title || '" PROBLEM="Cannot find class ''' || class_name || '''.*NMake sure that*N· the current directory of GoldEd is the same as for the compiler,*N· the class path (loadpath.se) is set properly*N· the class name is typed properly and the file exists.*N"'
+   Return
+
+/* Syntax error handler */
+SYNTAX:
+   Say "Syntax error line" SIGL ":" ErrorText(RC)
+   'UNLOCK'
+
+   exit
+
+

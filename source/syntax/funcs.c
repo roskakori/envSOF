@@ -1,37 +1,36 @@
 /*
+ * funcs.c -- Cached Eiffel syntax parser for GoldEd Studio 6.
  *
- * eiffel.parser -- Cached Eiffel syntax parser for GoldEd.
- *
- * Copyright 1999 Thomas Aglassinger
- *
+ * Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
  */
 #define DEBUG 0
 
 #define PARSER_NAME     "Eiffel"
-#define PARSER_VERSION  "2.1"
+#define PARSER_VERSION  "2.3"
 #define PARSER_VERSION_ID 1
 
 #include "defs.h"
+#include "debug.h"
 #include "language.h"
+#include "keyword.h"
 
 /// "Header stuff"
 
-// Buffer handles are allocated for each text buffer to keep track of ressources:
+// we extend the ParserHandle structure for our private data
 
-struct BufferHandle
-{
+struct MyParserHandle {
 
-	struct EditConfig *bh_EditConfig;	// pointer to text data
+   struct ParserHandle ParserHandle;   // embedded parser handle
 
-	struct GlobalConfig *bh_GlobalConfig;	// editor configuration
+   struct SyntaxChunk *SyntaxStack;    // parser output
 
-	struct SyntaxChunk *bh_SyntaxStack;		// parser output
+   struct EditConfig *EditConfig;   // buffer data
 
-	struct RefreshRequest bh_RefreshRequest;	// display refresh request
+   struct keyword_info *keyword_info;  // keywords to be recognised
 
 };
 
-#define EMPTY_STACK ((struct SyntaxChunk *)~0)	// empty stack flag
+#define EMPTY_STACK ((struct SyntaxChunk *)~0)  // empty stack flag
 
 extern char is_normal[256];
 extern char is_alpha[256];
@@ -39,71 +38,45 @@ extern char is_numeric[256];
 extern char is_upper[256];
 extern char is_lower[256];
 
+// names of built-in syntax levels
+
+const static UBYTE *levelNames[SYNTAX_MAXIMUM + 1] =
+{
+   "Standard text",
+   "Comment",
+   "Manifest string",
+   "Keyword",
+   "Reserved word",
+   "Type name",
+   "Constant name",
+   // "Routine declaration",
+   "Error or flaw",
+   NULL
+};
+
 ///
+
 /// "Prototype"
 
 // library functions
 
-Prototype LibCall struct ParserData *MountScanner(void);
-Prototype LibCall ULONG StartScanner(__A0 struct GlobalConfig *, __A1 struct EditConfig *, __D0 struct SyntaxChunk *);
-Prototype LibCall ULONG CloseScanner(__D0 ULONG);
-Prototype LibCall void FlushScanner(__D0 ULONG);
-Prototype LibCall void SetupScanner(__A0 struct GlobalConfig *);
-Prototype LibCall struct RefreshRequest *BriefScanner(__D0 ULONG, __A0 struct ScannerNotify *);
-Prototype LibCall struct SyntaxChunk *ParseLine(__D0 ULONG, __A0 struct LineNode *, __D1 ULONG);
-Prototype LibCall void UnparseLines(__A0 struct LineNode *, __D0 ULONG);
-Prototype LibCall void ParseSection(__D0 ULONG, __A0 struct LineNode *, __D1 ULONG);
+Prototype LibCall struct ParserData     *MountScanner(void);
+Prototype LibCall struct ParserHandle   *StartScanner(__A0 struct GlobalConfig *, __A1 struct EditConfig *, __D0 struct SyntaxChunk *, __D1 struct SyntaxSetup *);
+Prototype LibCall ULONG                  CloseScanner(__A0 struct ParserHandle *);
+Prototype LibCall void                   FlushScanner(__A0 struct ParserHandle *);
+Prototype LibCall void                   SetupScanner(__A0 struct GlobalConfig *);
+Prototype LibCall struct RefreshRequest *BriefScanner(__A0 struct ParserHandle *, __A1 struct ScannerNotify *);
+Prototype LibCall struct SyntaxChunk    *ParseLine   (__A0 struct ParserHandle *, __A1 struct LineNode *, __D0 ULONG);
+Prototype LibCall void                   UnparseLines(__A0 struct LineNode *, __D0 ULONG);
+Prototype LibCall void                   ParseSection(__A0 struct ParserHandle *, __A1 struct LineNode *, __D0 ULONG);
 
 // private functions
 
-Prototype struct SyntaxChunk *ParseString(UBYTE *, UWORD, ULONG);
-Prototype struct SyntaxChunk *DupStack(struct SyntaxChunk *);
+Prototype struct SyntaxChunk            *ParseString (UBYTE *, UWORD, struct ParserHandle *);
+Prototype struct SyntaxChunk            *DupStack    (struct SyntaxChunk *);
 
 ///
 
-/// "Debugging stuff"
-#if DEBUG
-#define D(x) x
-#define bug kputs
-
-ULONG debugFH = NULL;
-#include <clib/dos_protos.h>
-
-#define DEBUG 0
-
-// print debugging message; automatically opens a console
-// NOTE: The console is never closed, thus keeping a lock and resources.
-//       This is ugly, but I don't know how to use kprintf() in DICE.
-//       Nevertheless you can close the console window by clicking its
-//       close gadget.
-void kputs(char *text)
-{
-	if (debugFH == NULL)
-	{
-		debugFH = Open("con:9999//200/700/Debug/AUTO/INACTIVE", 1006);
-	}
-
-	Write(debugFH, text, strlen(text));
-}
-
-// display integer in debugging console
-void kint(int number)
-{
-	char *digits3 = "1234";
-	digits3[0] = (number / 1000) % 10 + '0';
-	digits3[1] = (number / 100) % 10 + '0';
-	digits3[2] = (number / 10) % 10 + '0';
-	digits3[3] = (number / 1) % 10 + '0';
-
-	kputs(digits3);
-}
-
-#else
-#define D(x)
-#define bug
-#endif
-
-///
 /// "Library functions"
 
 /* ------------------------------- MountScanner --------------------------------
@@ -114,80 +87,60 @@ void kint(int number)
  */
 
 LibCall struct ParserData *
-  MountScanner()
+MountScanner()
 {
-	static UBYTE version[] = "$VER: " PARSER_NAME " " PARSER_VERSION " (" __COMMODORE_DATE__ ")";
+   static UBYTE version[] = "$VER: " PARSER_NAME " " PARSER_VERSION " (" __COMMODORE_DATE__ ")";
 
-	static struct ParserData parserData;
+   static struct ParserData parserData;
 
-	// syntax elements understood by parser
+   // syntax elements understood by parser
 
-	static UBYTE *levelNames[] =
-	{
+   const static UBYTE *example[] =
+   {
+      "indexing                       ",
+      "  description: \"Say hello.\"    ",
+      "                               ",
+      "class                          ",
+      "   HELLO                       ",
+      "                               ",
+      "creation {ANY}                 ",
+      "   make                        ",
+      "                               ",
+      "feature {ANY}                  ",
+      "                               ",
+      "   make is                     ",
+      "      do                       ",
+      "         print(\"hello%         ",
+      "               % world\")       ",
+      "         print('%N')           ",
+      "      end -- make              ",
+      "                               ",
+      "   Almost_pi: REAL is 3.1415   ",
+      "                               ",
+      "   Is_nice: BOOLEAN is True;   ",
+      "                               ",
+      "   DontUseSuchNames: LOOSER    ",
+      "      -- only Java cunts do it ",
+      "                               ",
+      "end -- class HELLO             ",
+      NULL
+   };
 
-		"Standard text",
-		"Comment",
-		"Manifest string",
-		"Keyword",
-		"Reserved word",
-		"Type name",
-		"Constant name",
-	/*"Routine declaration", */
-		"Error or flaw",
-	/*"Other name", *//* "Other name" is useless because of "Standard text" */
-		NULL
-	};
+   setup_char_array();
+   create_keyword_list();
 
-	static UBYTE *example[] =
-	{
-		"-- Simple Eiffel example.      ",
-		"class                          ",
-		"   HELLO                       ",
-		"creation {ANY}                 ",
-		"   make                        ",
-		"feature {ANY}                  ",
-		"   make is                     ",
-		"      do                       ",
-		"         print(\"hello%         ",
-		"               % world\");      ",
-		"         print('%N');          ",
-		"      end; -- make             ",
-		"   DontUseSuchNames: INTEGER;  ",
-		"      -- only Java cunts do it ",
-		"   Is_nice: BOOLEAN is True;   ",
-		"end -- class HELLO             ",
-		NULL
-	};
+   parserData.pd_Release = SCANLIBVERSION;
+   parserData.pd_Version = 1;
+   parserData.pd_Serial = 0;
+   parserData.pd_Info = PARSER_NAME " " PARSER_VERSION;
+   parserData.pd_Example = example;
+   parserData.pd_Properties = 0;
 
-	// color suggestions
+   // signal editor that we cache syntax information
 
-	static ULONG levelColors[] =
-	{
+   parserData.pd_Flags = SCPRF_SYNTAXCACHE;
 
-		MAKE_RGB4(0, 0, 0),		  /* SYNTAX_TEXT */
-		MAKE_RGB4(0, 0, 0),		  /* SYNTAX_COMMENT */
-		MAKE_RGB4(0, 0, 0),		  /* SYNTAX_STRING */
-		MAKE_RGB4(15, 15, 15),	  /* SYNTAX_KEYWORD */
-		MAKE_RGB4(0, 0, 0),		  /* SYNTAX_RESERVED_WORD */
-		MAKE_RGB4(0, 0, 0),		  /* SYNTAX_TYPE */
-		MAKE_RGB4(0, 0, 0),		  /* SYNTAX_CONSTANT */
-		MAKE_RGB4(0, 0, 0),		  /* SYNTAX_DECLARATION */
-		MAKE_RGB4(0, 0, 0)		  /* SYNTAX_BAD */
-	};
-
-	setup_char_array();
-
-	parserData.pd_Release = SCANLIBVERSION;
-	parserData.pd_Version = PARSER_VERSION_ID;
-	parserData.pd_Serial = 0;
-	parserData.pd_Info = PARSER_NAME " " PARSER_VERSION;
-	parserData.pd_Levels = (sizeof(levelNames) / sizeof(UBYTE *)) - 1;
-	parserData.pd_Names = levelNames;
-	parserData.pd_Colors = levelColors;
-	parserData.pd_Flags = SCPRF_SYNTAXCACHE;
-	parserData.pd_Example = example;
-
-	return (&parserData);
+   return (&parserData);
 }
 
 /* ------------------------------- StartScanner --------------------------------
@@ -197,20 +150,75 @@ LibCall struct ParserData *
  *
  */
 
-LibCall ULONG
-  StartScanner(__A0 struct GlobalConfig * globalConfigPtr, __A1 struct EditConfig * editConfigPtr, __D0 struct SyntaxChunk * syntaxStack)
+/* ------------------------------- StartScanner --------------------------------
+ *
+ * Called by the editor after a new text buffer has been created. We return a
+ * parser handle (extended with our private data).
+ *
+ */
+
+LibCall struct ParserHandle *
+StartScanner(__A0 struct GlobalConfig *globalConfigPtr, __A1 struct EditConfig *editConfigPtr, __D0 struct SyntaxChunk *syntaxStack, __D1 struct SyntaxSetup *syntaxSetup)
 {
-	struct BufferHandle *handle;
+#define TEMPLATE "FILE"
+   struct MyParserHandle *handle = NULL;
+   UBYTE *settings_argument = syntaxSetup->sp_UserData;  // parser argument string
 
-	if (handle = AllocVec(sizeof(struct BufferHandle), MEMF_PUBLIC | MEMF_CLEAR))
-	{
+   ULONG length = 0;            // length of parser argument string
 
-		handle->bh_GlobalConfig = globalConfigPtr;
-		handle->bh_EditConfig = editConfigPtr;
-		handle->bh_SyntaxStack = syntaxStack;
-	}
+   STRPTR scan_buffer;          // contains copy of parser argument string with "\n"
 
-	return ((ULONG) handle);
+   static enum {
+      ARG_FILE, ARG_MAX
+   };
+   LONG argument[ARG_MAX] =
+   {NULL};
+   argument[ARG_FILE] = (LONG) "golded:add-ons/eiffel/syntax/eiffel.keyword";
+
+   // Copy parser arguments to buffer and append "\n"
+   if (settings_argument != NULL) {
+      length = strlen(settings_argument);
+   }
+   scan_buffer = AllocVec(length + 2, MEMF_ANY);
+   if (scan_buffer != NULL) {
+      if (length > 0) {
+         strcpy(scan_buffer, settings_argument);
+      }
+      scan_buffer[length] = '\n';
+      scan_buffer[length + 1] = '\0';
+   }
+   if (scan_buffer != NULL) {
+      struct RDArgs *scanner = (struct RDArgs *) AllocDosObject(DOS_RDARGS, NULL);
+
+      if (scanner != NULL) {
+         scanner->RDA_Source.CS_Buffer = scan_buffer;
+         scanner->RDA_Source.CS_Length = (LONG) strlen(scan_buffer);
+
+         if (ReadArgs(TEMPLATE, argument, scanner)) {
+
+            if (handle = AllocVec(sizeof(struct MyParserHandle), MEMF_PUBLIC | MEMF_CLEAR)) {
+
+               handle->keyword_info = keywords_of((STRPTR) argument[ARG_FILE]);
+
+               if (handle->keyword_info != NULL) {
+                  handle->ParserHandle.ph_Levels = SYNTAX_MAXIMUM;
+                  handle->ParserHandle.ph_Names = levelNames;
+                  handle->ParserHandle.ph_ColorsFG = NULL;
+                  handle->ParserHandle.ph_ColorsBG = NULL;
+                  handle->SyntaxStack = syntaxStack;
+                  handle->EditConfig = editConfigPtr;
+               } else {
+                  FreeVec(handle);
+                  handle = NULL;
+               }
+            }
+            FreeArgs(scanner);
+         }
+         FreeDosObject(DOS_RDARGS, scanner);
+      }
+      FreeVec(scan_buffer);
+   }
+   return ((ULONG) handle);
 }
 
 /* ------------------------------- CloseScanner --------------------------------
@@ -221,17 +229,18 @@ LibCall ULONG
  */
 
 LibCall ULONG
-  CloseScanner(__D0 ULONG scanID)
+CloseScanner(__A0 struct ParserHandle * handle)
 {
-	if (scanID)
-	{
+   D(bug("CloseScanner()\n"));
+   if (handle) {
 
-		struct BufferHandle *handle = (struct BufferHandle *) scanID;
+      struct MyParserHandle *my_handle = (struct *MyParserHandle) *handle;
 
-		FreeVec(handle);
-	}
+      dispose_keyword_info(my_handle->keyword_info);
 
-	return (0);
+      FreeVec(handle);
+   }
+   return (0);
 }
 
 /* ------------------------------- FlushScanner --------------------------------
@@ -242,17 +251,14 @@ LibCall ULONG
  */
 
 LibCall void
-  FlushScanner(__D0 ULONG scanID)
+FlushScanner(__A0 struct ParserHandle *handle)
 {
-	struct BufferHandle *handle;
-	struct EditConfig *config;
-	struct LineNode *lineNode;
+   D(bug("FlushScanner()\n"));
+   struct EditConfig *config = ((struct MyParserHandle *) handle)->EditConfig;
 
-	handle = (struct BufferHandle *) scanID;
-	config = handle->bh_EditConfig;
-
-	if (lineNode = config->TextNodes)
-		UnparseLines(lineNode, config->Lines);
+   if (config->TextNodes && config->Lines) {
+      UnparseLines(config->TextNodes, config->Lines);
+   }
 }
 
 /* ------------------------------- SetupScanner --------------------------------
@@ -264,9 +270,9 @@ LibCall void
  */
 
 LibCall void
-  SetupScanner(__A0 globalConfigPtr)
+SetupScanner(__A0 globalConfigPtr)
 {
-	;
+   ;
 }
 
 /* ------------------------------- BriefScanner --------------------------------
@@ -279,9 +285,9 @@ LibCall void
  */
 
 LibCall struct RefreshRequest *
-  BriefScanner(__D0 ULONG scanID, __A0 struct ScannerNotify *notify)
+BriefScanner(__A0 struct ParserHandle *handle, __A1 struct ScannerNotify *notify)
 {
-	return (NULL);
+   return (NULL);
 }
 
 /* --------------------------------- ParseLine ---------------------------------
@@ -291,35 +297,30 @@ LibCall struct RefreshRequest *
  */
 
 LibCall struct SyntaxChunk *
-  ParseLine(__D0 ULONG scanID, __A0 struct LineNode *lineNode, __D1 ULONG line)
+ParseLine(__A0 struct ParserHandle *handle, __A1 struct LineNode *lineNode, __D0 ULONG line)
 {
-	if (IS_FOLD(lineNode))
+   if (IS_FOLD(lineNode))
+      return (NULL);
 
-		return (NULL);
+   else if (lineNode->Len) {
 
-	else if (lineNode->Len)
-	{
+      // line not yet parsed ?
 
-		// line not yet parsed ?
+      if (lineNode->UserData == NULL) {
 
-		if (lineNode->UserData == NULL)
-		{
+         struct SyntaxChunk *syntaxStack = ParseString(lineNode->Text, lineNode->Len, handle);
 
-			struct SyntaxChunk *syntaxStack = ParseString(lineNode->Text, lineNode->Len, scanID);
-
-			if (syntaxStack == EMPTY_STACK)
-				lineNode->UserData = EMPTY_STACK;
-			else
-				lineNode->UserData = DupStack(syntaxStack);
-		}
-
-		if (lineNode->UserData == EMPTY_STACK)
-			return ((struct SyntaxChunk *) NULL);
-		else
-			return ((struct SyntaxChunk *) lineNode->UserData);
-	}
-	else
-		return (NULL);
+         if (syntaxStack == EMPTY_STACK)
+            lineNode->UserData = EMPTY_STACK;
+         else
+            lineNode->UserData = DupStack(syntaxStack);
+      }
+      if (lineNode->UserData == EMPTY_STACK)
+         return ((struct SyntaxChunk *) NULL);
+      else
+         return ((struct SyntaxChunk *) lineNode->UserData);
+   } else
+      return (NULL);
 }
 
 /* -------------------------------- UnparseLines -------------------------------
@@ -330,34 +331,29 @@ LibCall struct SyntaxChunk *
  */
 
 LibCall void
-  UnparseLines(__A0 struct LineNode *lineNode, __D0 ULONG lines)
+UnparseLines(__A0 struct LineNode *lineNode, __D0 ULONG lines)
 {
-	while (lines--)
-	{
+   while (lines--) {
 
-		// free syntax cache
+      // free syntax cache
 
-		if (lineNode->UserData)
-		{
+      if (lineNode->UserData) {
 
-			if (lineNode->UserData != (APTR) EMPTY_STACK)
-				FreeVec((APTR) lineNode->UserData);
+         if (lineNode->UserData != (APTR) EMPTY_STACK)
+            FreeVec((APTR) lineNode->UserData);
 
-			lineNode->UserData = NULL;
-		}
+         lineNode->UserData = NULL;
+      }
+      // free folded subblock
 
-		// free folded subblock
+      if (IS_FOLD(lineNode)) {
 
-		if (IS_FOLD(lineNode))
-		{
+         struct Fold *fold = (struct Fold *) lineNode->SpecialInfo;
 
-			struct Fold *fold = (struct Fold *) lineNode->SpecialInfo;
-
-			UnparseLines(fold->TextNodes, fold->Lines);
-		}
-
-		++lineNode;
-	}
+         UnparseLines(fold->TextNodes, fold->Lines);
+      }
+      ++lineNode;
+   }
 }
 
 /* -------------------------------- ParseSection -------------------------------
@@ -368,54 +364,53 @@ LibCall void
  */
 
 LibCall void
-  ParseSection(__D0 ULONG scanID, __A0 struct LineNode *lineNode, __D1 ULONG lines)
+ParseSection(__A0 struct ParserHandle *handle, __A1 struct LineNode *lineNode, __D0 ULONG lines)
 {
-	while (lines--)
-	{
+#if 0
+   while (lines--) {
 
-		// fold headers have to be ignored
+      // fold headers have to be ignored
 
-		if (IS_FOLD(lineNode) == FALSE)
-		{
+      if (IS_FOLD(lineNode) == FALSE) {
 
-			// line not yet parsed ?
+         // line not yet parsed ?
 
-			if (lineNode->Len)
-				if (lineNode->UserData == NULL)
-					lineNode->UserData = DupStack(ParseString(lineNode->Text, lineNode->Len, scanID));
-		}
-
-		++lineNode;
-	}
+         if (lineNode->Len)
+            if (lineNode->UserData == NULL)
+               lineNode->UserData = DupStack(ParseString(lineNode->Text, lineNode->Len, handle));
+      }
+      ++lineNode;
+   }
+#endif
 }
 
 ///
+
 /// "private"
 
 /* -------------------------------- getNameType ---------------------------- */
 UBYTE
-getNameType(UBYTE * text, ULONG begin, ULONG end)
+getNameType(UBYTE * text, ULONG begin, ULONG end, struct keyword_info *info)
 {
 #if 1
-	UBYTE word[500];
-	LONG word_index = begin;
+   UBYTE word[500];
+   LONG word_index = begin;
 
-	while (word_index <= end)
-	{
-		word[word_index - begin] = text[word_index];
-		word_index += 1;
-	}
-	word[word_index - begin] = 0;
+   while (word_index <= end) {
+      word[word_index - begin] = text[word_index];
+      word_index += 1;
+   }
+   word[word_index - begin] = 0;
 
-	D(bug("  check word: \""));
-	D(bug(word));
-	D(bug("\"\n"));
+   D(bug("  check word: \""));
+   D(bug(word));
+   D(bug("\"\n"));
 #endif
 
 #if 1
-	return get_word_type(text, begin, end + 1);
+   return get_word_type(text, begin, end + 1, info);
 #else
-	return SYNTAX_KEYWORD;
+   return SYNTAX_KEYWORD;
 #endif
 }
 
@@ -427,7 +422,7 @@ getNameType(UBYTE * text, ULONG begin, ULONG end)
  */
 
 struct SyntaxChunk *
-  ParseString(UBYTE * text, UWORD len, ULONG scanID)
+ParseString(UBYTE * text, UWORD len, struct ParserHandle *handle)
 {
 #define ADD_ELEMENT(start,end,level)           \
 {                                              \
@@ -444,224 +439,188 @@ struct SyntaxChunk *
     D(bug("\n"));                              \
 }
 
-	UBYTE *lineStart = text;
-	UWORD lenStart = len;
+   UBYTE *lineStart = text;
+   UWORD lenStart = len;
 
-	if (len)
-	{
+   if (len) {
+      struct MyParserHandle *my_handle = (struct MyParserHandle *) handle;
+      struct SyntaxChunk *syntaxStack = my_handle->SyntaxStack;
+      struct keyword_info *info = my_handle->keyword_info;
 
-		struct SyntaxChunk *syntaxStack = ((struct BufferHandle *) scanID)->bh_SyntaxStack;
+      UWORD element, indent;
+      UWORD stringStart, stringEnd;
+      UWORD nameStart, nameEnd;
+      // if in string/character, this is either (") or ('), otherwise 0
+      UBYTE inString = 0;
+      // if in name, this is the first character of the name, otherwise 0
+      UBYTE inName = 0;
+      BOOL inComment = FALSE;
+      BOOL afterPercent = FALSE;
 
-		UWORD element, indent;
-		UWORD stringStart, stringEnd;
-		UWORD nameStart, nameEnd;
-		// if in string/character, this is either (") or ('), otherwise 0
-		UBYTE inString = 0;
-		// if in name, this is the first character of the name, otherwise 0
-		UBYTE inName = 0;
-		BOOL inComment = FALSE;
-		BOOL afterPercent = FALSE;
+      // leading and trailing spaces have to be ignored
+      for (indent = 0; (len && (*text <= 32)); --len, ++indent)
+         ++text;
+      while (len && (text[len - 1] <= 32))
+         --len;
 
-		// leading and trailing spaces have to be ignored
+      // no syntax elements found so far
+      element = 0;
 
-		for (indent = 0; (len && (*text <= 32)); --len, ++indent)
-			++text;
+      if (*text == '%') {
 
-		while (len && (text[len - 1] <= 32))
-			--len;
+         inString = '"';
+         afterPercent = TRUE;
+         stringStart = indent;
+      }
+      for (inComment = FALSE; len >= 1; ++text, ++indent, --len) {
 
-		// no syntax elements found so far
+         if (inName) {
 
-		element = 0;
+            if (!is_normal[*text]) {
+               int nameType;
+               UBYTE *ends_with = " ";
+               ends_with[0] = *text;
 
-		if (*text == '%')
-		{
+               // end of new name
+               D(bug("  Name ends with \""));
+               D(bug(ends_with));
+               D(bug("\"\n"));
 
-			inString = '"';
-			afterPercent = TRUE;
-			stringStart = indent;
-		}
+               // go back one char so it is parsed again
+               text -= 1;
+               indent -= 1;
+               len += 1;
+               ends_with[0] = *text;
+               D(bug("  Now at \""));
+               D(bug(ends_with));
+               D(bug("\"\n"));
 
-		for (inComment = FALSE; len >= 1; ++text, ++indent, --len)
-		{
+               nameEnd = indent;
+               nameType = getNameType(lineStart, nameStart, nameEnd, info);
 
-			if (inName)
-			{
+               if (nameType != SYNTAX_TEXT) {
+                  ADD_ELEMENT(nameStart, nameEnd, nameType);
+               }
+               inName = 0;
+            }
+         } else if (inString) {
 
-				if (!is_normal[*text])
-				{
-					int nameType;
-					UBYTE *ends_with = " ";
-					ends_with[0] = *text;
+            if (afterPercent) {
 
-					// end of new name
-					D(bug("  Name ends with \""));
-					D(bug(ends_with));
-					D(bug("\"\n"));
+               // skip escaped character
+               afterPercent = FALSE;
 
-					// go back one char so it is parsed again
-					text -= 1;
-					indent -= 1;
-					len += 1;
-					ends_with[0] = *text;
-					D(bug("  Now at \""));
-					D(bug(ends_with));
-					D(bug("\"\n"));
+            } else if (*text == inString) {
 
-					nameEnd = indent;
-					nameType = getNameType(lineStart, nameStart, nameEnd);
+               // end of string detected
 
-					if (nameType != SYNTAX_TEXT)
-					{
-						ADD_ELEMENT(nameStart, nameEnd, nameType);
-					}
-					inName = 0;
-				}
-			}
-			else if (inString)
-			{
+               D(bug("  String end: "));
 
-				if (afterPercent)
-				{
+               stringEnd = indent - 1;
+               ADD_ELEMENT(stringStart, stringEnd, SYNTAX_STRING);
+               inString = 0;
+               afterPercent = FALSE;
 
-					// skip escaped character
-					afterPercent = FALSE;
+               D(kint(stringStart));
+               D(bug(" - "));
+               D(kint(stringEnd));
+               D(bug("\n"));
 
-				}
-				else if (*text == inString)
-				{
+            } else if (*text == '%') {
 
-					// end of string detected
+               afterPercent = TRUE;
+            }
+         } else if ((*text == 34) || (*text == 39)) {
 
-					D(bug("  String end: "));
+            D(bug("  String start\n"));
 
-					stringEnd = indent - 1;
-					ADD_ELEMENT(stringStart, stringEnd, SYNTAX_STRING);
-					inString = 0;
-					afterPercent = FALSE;
+            // start of string detected
+            inString = *text;
+            afterPercent = FALSE;
+            stringStart = indent + 1;
 
-					D(kint(stringStart));
-					D(bug(" - "));
-					D(kint(stringEnd));
-					D(bug("\n"));
+         } else if ((len >= 2) && (text[0] == '-') && (text[1] == '-')) {
 
-				}
-				else if (*text == '%')
-				{
+            // comment until end of line
+            ADD_ELEMENT(indent, indent + len - 1, SYNTAX_COMMENT);
+            break;
+         } else if (is_alpha[*text]) {
 
-					afterPercent = TRUE;
-				}
-			}
-			else if ((*text == 34) || (*text == 39))
-			{
+            // Start of a new name */
+            D(bug("  Name start\n"));
 
-				D(bug("  String start\n"));
+            // start of name detected
+            inName = *text;
+            afterPercent = FALSE;
+            nameStart = indent;
+         } else {
+            UBYTE *ends_with = " ";
+            ends_with[0] = *text;
 
-				// start of string detected
-				inString = *text;
-				afterPercent = FALSE;
-				stringStart = indent + 1;
+            // end of new name
+            D(bug("ignore \""));
+            D(bug(ends_with));
+            D(bug("\"\n"));
+         }
+      }
 
-			}
-			else if ((len >= 2) && (text[0] == '-') && (text[1] == '-'))
-			{
+      // go back one char so the last char of the line is addressed
+      text -= 1;
+      indent -= 1;
+      len += 1;
 
-				// comment until end of line
-				ADD_ELEMENT(indent, indent + len - 1, SYNTAX_COMMENT);
-				break;
-			}
-			else if (is_alpha[*text])
-			{
+      // unterminated string or name? highlight rest of line
 
-				// Start of a new name */
-				D(bug("  Name start\n"));
+      if (inString) {
 
-				// start of name detected
-				inName = *text;
-				afterPercent = FALSE;
-				nameStart = indent;
-			}
-			else
-			{
-				UBYTE *ends_with = " ";
-				ends_with[0] = *text;
+         UBYTE level = SYNTAX_STRING;
+         stringEnd = indent + len - 1;
 
-				// end of new name
-				D(bug("ignore \""));
-				D(bug(ends_with));
-				D(bug("\"\n"));
-			}
-		}
+         if (*text != '%') {
+            stringEnd += 0;
+            level = SYNTAX_BAD;
+         }
+         ADD_ELEMENT(stringStart, stringEnd, level);
+      } else if (inName) {
+         UBYTE *buf = "  ";
 
-		// go back one char so the last char of the line is addressed
-		text -= 1;
-		indent -= 1;
-		len += 1;
+         buf[0] = text[-1];
+         buf[1] = text[0];
+         D(bug("last word ends: \""));
+         D(bug(buf));
+         D(bug("\"\n"));
 
-		// unterminated string or name? highlight rest of line
+         if (!is_normal[*text]) {
+            D(bug("  (decreased)\n"));
+            len -= 1;
+         }
+         nameEnd = indent + len - 1;
+         ADD_ELEMENT(nameStart, nameEnd,
+                     getNameType(lineStart, nameStart, nameEnd, info));
+      }
+      if (element) {
 
-		if (inString)
-		{
-
-			UBYTE level = SYNTAX_STRING;
-			stringEnd = indent + len - 1;
-
-			if (*text != '%')
-			{
-				stringEnd += 0;
-				level = SYNTAX_BAD;
-			}
-
-			ADD_ELEMENT(stringStart, stringEnd, level);
-		}
-		else if (inName)
-		{
-			UBYTE *buf = "  ";
-
-			buf[0] = text[-1];
-			buf[1] = text[0];
-			D(bug("last word ends: \""));
-			D(bug(buf));
-			D(bug("\"\n"));
-
-			if (!is_normal[*text])
-			{
-				D(bug("  (decreased)\n"));
-				len -= 1;
-			}
-
-			nameEnd = indent + len - 1;
-			ADD_ELEMENT(nameStart, nameEnd,
-							getNameType(lineStart, nameStart, nameEnd));
-		}
-
-		if (element)
-		{
-
-			// check, if last element is "is". If so, first element is
-			// a feature declaration
+         // check, if last element is "is". If so, first element is
+         // a feature declaration
 #if 0
-			struct SyntaxChunk *firstElement = &(syntaxStack[0]);
-			struct SyntaxChunk *lastElement = &(syntaxStack[element - 1]);
+         struct SyntaxChunk *firstElement = &(syntaxStack[0]);
+         struct SyntaxChunk *lastElement = &(syntaxStack[element - 1]);
 
-			if ((lastElement->sc_Level == SYNTAX_KEYWORD)
-				 && ((lastElement->sc_End - lastElement->sc_Start) == 2)
-				)
-			{
-				firstElement->sc_Level = SYNTAX_DECLARATION;
-			}
+         if ((lastElement->sc_Level == SYNTAX_KEYWORD)
+             && ((lastElement->sc_End - lastElement->sc_Start) == 2)
+            ) {
+            firstElement->sc_Level = SYNTAX_DECLARATION;
+         }
 #endif
 
-			// terminate syntax stack
-			ADD_ELEMENT(FALSE, FALSE, FALSE);
-			return (syntaxStack);
-		}
-		else
-			return (EMPTY_STACK);
+         // terminate syntax stack
+         ADD_ELEMENT(FALSE, FALSE, FALSE);
+         return (syntaxStack);
+      } else
+         return (EMPTY_STACK);
 
-	}
-	else
-		return (EMPTY_STACK);
+   } else
+      return (EMPTY_STACK);
 }
 
 /* --------------------------------- DupStack ----------------------------------
@@ -671,38 +630,32 @@ struct SyntaxChunk *
  */
 
 struct SyntaxChunk *
-  DupStack(syntaxStack)
-
-	  struct SyntaxChunk *syntaxStack;
+DupStack(struct SyntaxChunk *syntaxStack)
 {
-	if (syntaxStack && (syntaxStack != EMPTY_STACK))
-	{
+   if (syntaxStack && (syntaxStack != EMPTY_STACK)) {
 
-		struct SyntaxChunk *chunk;
-		UWORD elements;
+      struct SyntaxChunk *chunk;
+      UWORD elements;
 
-		// determine stack size
+      // determine stack size
 
-		for (elements = 0, chunk = syntaxStack; chunk->sc_Level; ++chunk)
-			++elements;
+      for (elements = 0, chunk = syntaxStack; chunk->sc_Level; ++chunk)
+         ++elements;
 
-		// create copy of syntax stack (to be attached to a text line by the caller)
+      // create copy of syntax stack (to be attached to a text line by the caller)
 
-		if (elements)
-		{
+      if (elements) {
 
-			ULONG size = (++elements) * sizeof(struct SyntaxChunk);
+         ULONG size = (++elements) * sizeof(struct SyntaxChunk);
 
-			chunk = syntaxStack;
+         chunk = syntaxStack;
 
-			if (syntaxStack = AllocVec(size, MEMF_PUBLIC))
-				movmem(chunk, syntaxStack, size);
-		}
-		else
-			syntaxStack = EMPTY_STACK;
-	}
-
-	return (syntaxStack);
+         if (syntaxStack = AllocVec(size, MEMF_PUBLIC))
+            movmem(chunk, syntaxStack, size);
+      } else
+         syntaxStack = EMPTY_STACK;
+   }
+   return (syntaxStack);
 }
 
 ///

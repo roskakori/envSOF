@@ -1,0 +1,101 @@
+/*
+ * reformat.ged -- Reformat Eiffel source using SmallEiffel's `pretty'.
+ *
+ * Copyright (C) 1999 Thomas Aglassiner <agi@sbox.tu-graz.ac.at>
+ * Freeware. Use at your own risk.
+ */
+version_info = "$VER: reformat.ged 1.4 (29.8.99)"
+
+OPTIONS RESULTS                             /* enable return codes     */
+
+if (LEFT(ADDRESS(), 6) ~= "GOLDED") then    /* not started by GoldEd ? */
+    address 'GOLDED.1'
+
+'LOCK CURRENT RELEASE=4'                    /* lock GUI, gain access   */
+
+if (RC ~= 0) then
+    exit
+
+OPTIONS FAILAT 21
+
+SIGNAL ON SYNTAX                            /* ensure clean exit       */
+
+/* ------------------------ INSERT YOUR CODE HERE: ------------------- */
+
+rexx_path = 'GoldEd:add-ons/eiffel/rexx/'
+execute_command = rexx_path || 'execute.rexx'
+
+pretty_options = '-default'
+
+CALL ADDLIB('rexxdossupport.library', 0, -30, 2)
+
+/* Obtain current filename */
+'QUERY DOC VAR=filename'
+
+IF RIGHT(filename,2) = '.e' THEN DO
+
+   'REQUEST STATUS="Reformatting..."'
+
+   /* Save file, remember current position */
+   'SAVE ALL'
+   'QUERY ABSLINE VAR=old_line'
+   'QUERY COLUMN VAR=old_column'
+
+   /* Split filename to path and plain name */
+   delimiter_index = MAX(LASTPOS(':', filename), LASTPOS('/', filename))
+   directory = LEFT(filename, delimiter_index)
+   filename = SUBSTR(filename, delimiter_index + 1)
+
+   /* Change to directory where file is located to avoid problems
+    * with non-ixemul paths */
+   CALL PRAGMA('Directory', directory)
+
+   /* Delete possible backup */
+   backup_name = LEFT(filename, LENGTH(filename) - 1) || 'bak'
+   CALL Delete(backup_name)
+
+   ADDRESS COMMAND 'pretty ' || pretty_options || ' "' || filename || '"'
+
+   'REQUEST STATUS=""'
+   IF RC = 0 THEN DO
+      'OPEN AGAIN FORCE'
+      CALL Delete(backup_name)
+   END
+   ELSE DO
+      'REQUEST PROBLEM="Cannot reformat document.*NFix errors in source code and try again."'
+   END
+
+   /* Restore position in editor */
+   'QUERY ABSLINES VAR=lines'
+   if old_line > lines then do
+      'GOTO BOTTOM'
+   end
+   else do
+      'GOTO LINE=' || old_line
+   end
+   'QUERY COLUMNS VAR=columns'
+   if old_column > columns then do
+      'GOTO EOL'
+   end
+   else do
+      'GOTO COLUMN=' || old_column
+   end
+
+END
+ELSE DO
+   'REQUEST PROBLEM="Filename suffix for ''pretty'' must be ''.e''"'
+END
+
+
+/* ---------------------------- END OF YOUR CODE --------------------- */
+
+'UNLOCK' /* VERY important: unlock GUI */
+
+exit
+
+SYNTAX:
+
+   SAY "Syntax error line" SIGL ":" ERRORTEXT(RC)
+   'UNLOCK'
+
+   exit

@@ -24,35 +24,29 @@ SCANNER
 SYNTAX PARSER
 
    The syntax parser is a lot more complicated. Most of the source
-   files are from Dietmar Eilert's examples and have not been touched
-   much.
+   files are from Dietmar Eilert's generic_parser example and have not
+   been touched much.
 
    Changed or added files are:
 
       funcs.c - Implements the actual parser.
-
-      keyword.c - Functions to read the keyword file into an array.
-
-      language.c - A couple of string functions used for detection of
-      reserved word and some other syntax elements. Also declares
-      several arrays for the various character classes.
 
       tag.a - Declares symbols with the name of parser (_LibName and
       LibId). If these do not match the name in funcs.c, the parser
       won't show up in the configuration window.
 
       lib.c - Library wanking. My only change was to open
-      intuition.library to be able to display error messages.
+      rexxsyslib.library to be able to communicate with ISpell.
+
+      debug.(c|h) - some auxiliary routines because I couldn't figure
+      out how to use kprintf() with Dice.
 
    Use "dmake" to compile.
 
 TEST PROGRAMS
 
-   There are a few files named test_#?.c. I used to compile them with
-   SAS/c instead of DICE because of the less unstable debugger. That's
-   why there also is a SCOPTIONS in every directory. The test programs
-   don't need any register and linker magic and write their results to
-   stdout. No need to flush anything afterwards.
+   There are a few files named #?test#?. As you might have guessed
+   already, they are for testing purpose.
 
 Thomas.
 

@@ -1,8 +1,8 @@
 /*
- * create_images.pprx - Create toolbar images by extracting brushes from the
- *                      from toolbar.ilbm using PPaint 7.x
+ * make_images.pprx - Create toolbar images by extracting brushes from the
+ *                    from toolbar.ilbm using PPaint 7.x
  *
- * $VER: create_images.pprx 1.1 (28.8.99)
+ * $VER: make_images.pprx 1.1 (28.8.99)
  *
  * Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
  */

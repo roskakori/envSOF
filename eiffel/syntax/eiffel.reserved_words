@@ -1,0 +1,10 @@
+-- Eiffel reserved words
+-- $VER: eiffel.reserved_word 1.1 (1.9.00)
+Current
+False
+Precursor
+Result
+True
+Unique
+Void
+

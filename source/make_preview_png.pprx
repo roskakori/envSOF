@@ -1,7 +1,7 @@
 /*
- * create_preview_png.pprx - Convert Preview image to PNG using PPaint.
+ * make_preview_png.pprx - Convert Preview image to PNG using PPaint.
  *
- * $VER: create_preview_png.pprx 1.0 (31.8.99)
+ * $VER: make_preview_png.pprx 1.0 (31.8.99)
  *
  * Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
  */

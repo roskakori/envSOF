@@ -1,6 +1,6 @@
 @database "Manual.guide"
 @author "Thomas Aglassinger"
-@remark "$VER: Manual.guide 2.0 (11.10.99)"
+@remark "$VER: Manual.guide 2.1 (10.1.00)"
 
 @node MAIN "Eiffel/Sofa Mode for GoldEd Studio 6"
 
@@ -65,7 +65,7 @@
    util/rexx/rexxdossupport.lha.
 
    The Sofa distribution of the freeware SmallEiffel compiler is available
-   from http://www.owlnet.net/amiga/sofa/.
+   from http://www.owlnet.net/sofa/ or aminet:dev/lang/sofa.lha.
 
    GoldEd Studio is a commercial product and Copyright ©  Dietmar  Eilert.
    For more information refer to http://members.tripod.com/golded/.
@@ -81,20 +81,6 @@
    "Search/Show function list". Click on "Mode" and then on "+" to  add  a
    new scanner. Assign "GOLDED:etc/scanner/eiffel" to the filetype "*.e".
 
-@remark   If you do not trust the script, you can  perform  the  following  steps
-@remark   manually:
-@remark
-@remark   · Copy "syntax/eiffel.parser" to GoldEd:syntax/
-@remark   · Copy "scanner/eiffel" to GoldEd:scanner/
-@remark   · MakeDir GoldEd:toolbar/eiffel
-@remark   · Copy "toolbar/eiffel/#?" to GoldEd:toolbar/eiffel/
-@remark   · MakeDir GoldEd:tools/eiffel/arexx
-@remark   · Copy "Manual.guide" to GoldEd/tools/eiffel/
-@remark   · Copy "tools/eiffel/arexx/#?" to GoldEd:tools/eiffel/arexx
-@remark   · Copy "presets/#?" to GoldEd:presets/
-@remark
-@remark   If you are using GoldEd 5, wait for the next release.
-
 @endnode
 
 
@@ -102,66 +88,69 @@
 
    The syntax parser highlights syntax elements in different colors.
 
-   Right now it simply utilizes Dietmar Eilert's generic.parser. Actually,
-   I  already wrote more Eiffel-specific custom parser. Unfortunately, the
-   parser interface of GoldEd changed from 6.1 to 6.2, and I'm too lazy to
-   update my parser in the near future.
+   The syntax parser highlights syntax elements in  different  colors.  It
+   conforms  to  the  rules  of  chapter  26  of  the book @{i}Object Oriented
+   Software Construction@{ui} (2nd ed., 1997). A PDF version  of  this  chapter
+   should also be available from http://www.eiffel.com/.
 
-   For your confusion, this manual most of the time refers  to  my  custom
-   parser, in particlar when talking about bugs and future enhancements.
+   @{b}Comment@{ub}
+      Beginning with two hyphens (--) and lasting until  the  end  of  the
+      line, for example @{i}-- a comment@{ui}
 
-@remark   The syntax parser highlights syntax elements in  different  colors.  It
-@remark   conforms  to  the  rules  of  chapter  26  of  the book @{i}Object Oriented
-@remark   Software Construction@{ui} (2nd ed., 1997). A PDF version  of  this  chapter
-@remark   should also be available from http://www.eiffel.com/.
-@remark
-@remark   @{b}Comment@{ub}
-@remark      Beginning with two hyphens (--) and lasting until  the  end  of  the
-@remark      line.
-@remark
-@remark   @{b}Manifest string@{ub}
-@remark      Used for text enclosed in  double  quotes  (").  Multi-line  strings
-@remark      ending with a percent sign (%) and continuing in the next line after
-@remark      another percent sign are also supported.
-@remark
-@remark      Additionally, character constants enclosed in single quotes (') are
-@remark      rendered in the same color.
-@remark
-@remark   @{b}Keyword@{ub}
-@remark      Used for keywords of the language that  play  a  strictly  syntactic
-@remark      role, like @{i}if@{ui}, @{i}feature@{ui} or @{i}invariant@{ui}.
-@remark
-@remark   @{b}Reserved word@{ub}
-@remark      Used for reserved words that carry an associated semantics, such  as
-@remark      @{i}Current@{ui}, @{i}Result@{ui}, @{i}True@{ui} and @{i}Unique@{ui}.
-@remark
-@remark      (Note: The rule for some of these  have  changed  since  1992,  when
-@remark      @{i}Eiffel:  The Language@{ui} was published. For example, @{i}True@{ui} was initially
-@remark      written @{i}true@{ui}.)
-@remark
-@remark   @{b}Type name@{ub}
-@remark      Any identifier that may be used as a type, or part of a type, should be
-@remark      written all in upper case. This includes:
-@remark
-@remark      · Class names, in all possible uses
-@remark      · Formal generic parameters, such as @{i}G@{ui} in @{i}LIST@{ui}[@{i}G@{ui}].
-@remark      · Basic types like @{i}BOOLEAN@{ui}, @{i}INTEGER@{ui} and @{i}BIT@{ui}.
-@remark
-@remark   @{b}Constant name@{ub}
-@remark      Constant attributes should be written with an initial capital letter,
-@remark      with the rest in lower case, as in
-@remark
-@remark      · @{i}Red@{ui}, @{i}Green@{ui}, @{i}Blue@{ui}: INTEGER is Unique
-@remark      · @{i}Something_to_stay_that_way@{ui}: REAL
-@remark
-@remark   @{b}Error or flaw@{ub}
-@remark      Used for some things that are possibly wrong:
-@remark
-@remark      · Unterminated manifest strings
-@remark      · Names not conforming to any convention, like in @{i}DontUseThis@{ui}.
-@remark
-@remark      However, this is no complete check. You  code  might  still  contain
-@remark      various syntax errors.
+   @{b}Comment (identifier)@{ub}
+      References inside comments to identifiers in the source  code.  They
+      have  to be embedded between a backquote (`) and a single quote ('),
+      for example @{i}-- Draw circle with center at (`x', `y') and radius `r'.@{ui}
+
+   @{b}String@{ub}
+      Text enclosed in double quotes ("), for example @{i}"hello"@{ui}.
+
+      Character constants enclosed in single quotes (')  are  rendered  in
+      the same color.
+
+   @{b}String (escape)@{ub}
+      Escape sequences inside strings, starting with a percent  sign  (%),
+      for example @{i}"%N"@{ui} for newline.
+
+   @{b}String (trailer)@{ub}
+      If strings go over several lines, every such line uses percent  sign
+      (%) as trailers, for instance
+
+         "This is a long %
+         %text going over %
+         %several lines."
+
+      As these trailers make it hard  to  read  the  actual  text,  it  is
+      recommended  to  "low-light"  them  in  a color quote similar to the
+      background color, for example a slightly darker gray.
+
+   @{b}Warning@{ub}
+      Used  for  some  things  that  are  possibly  wrong,   for   example
+      unterminated strings or unknown escape sequences.
+
+      This is no complete check. You  code  might  still  contain  various
+      errors that prevent it being compiled.
+
+   @{b}Naming violation@{ub}
+      Names used for classes, routine  and  variables  should  conform  to
+      certain conventions, in particular letter case.
+
+      Example violations are @{i}MixedCaseCompund@{ui} and @{i}_begins_with_underscore@{ui}.
+
+   @{b}Spelling mistake@{ub}
+      See @{"Known Problems" link PROBLEMS}.
+
+   @{b}Keyword@{ub}
+      Used for keywords of the language that  play  a  strictly  syntactic
+      role, for example @{i}if@{ui}, @{i}feature@{ui} or @{i}invariant@{ui}.
+
+   @{b}Reserved word@{ub}
+      Used for reserved words that  carry  an  associated  semantics,  for
+      example @{i}Current@{ui}, @{i}Result@{ui}, @{i}True@{ui} and @{i}Unique@{ui}.
+
+      (Note: The rule for some of these  have  changed  since  1992,  when
+      @{i}Eiffel:  The Language@{ui} was published. For example, @{i}True@{ui} was initially
+      written @{i}true@{ui}.)
 
 @endnode
 
@@ -271,11 +260,23 @@
    @{b}dE@{ub} (debug instruction)
       debug("")... end
 
-   @{b}fR@{ub} (loop)
+   @{b}fE@{ub} (feature heading)
+      feature --
+
+   @{b}fR@{ub} (simple loop)
       from... until... loop... end
 
+   @{b}fR@{ub} (loop)
+      from... invariant... variant... until... loop... end
+
    @{b}iF@{ub} (conditional)
-      if... then... else... end
+      if... then... end
+
+   @{b}eL@{ub}
+      else
+
+   @{b}elI@{ub}
+      elseif...then
 
    @{b}iN@{ub} (multi-branch)
       inspect... when... else... end
@@ -283,9 +284,47 @@
    @{b}iS@{ub} (routine declaration)
       is... require... local... do... ensure... end;
 
+   Some common operations can be abbreviated as:
+
+   @{b}pR@{ub}
+
+      print ()
+
+   @{b}prI@{ub}
+
+      print ("")
+
+   @{b}++@{ub}
+
+      increment first word of line. For instance, type
+
+         index ++
+              ^
+      to get
+
+         index := index + 1
+
+      This is for C wimps who have a panic fear of typing.
+
+      Note the blank between "index" and "++". If you just type "index++",
+      the template is not recognized.
+
+   @{b}+=@{ub}
+
+      prepare first word of to be incremented by some value. For instance,
+      type
+
+         index += 17
+
+      to get
+
+         index := index + 17
+
+      See notes for "++".
+
    Note: Unlike in most other environments, you don't need  any  qualifier
    key  like Alt or Control to use templates. This is possible because the
-   Eiffel naming conventions  forbid  an  lower  case  letter  immediately
+   Eiffel naming  conventions  forbid  a  lower  case  letter  immediately
    preceeding an upper case letter.
 
 @endnode
@@ -317,40 +356,40 @@
          %/CURSOR/  position where the cursor should go to after loading
          %/DELETE/  marks line to be deleted (useful for comments)
 
-   @{b}New syntax parser keyword file@{ub}
-
-      Most parts of the syntax parser  are  hard-coded,  meaning  that  it
-      needs  a  change  in its source code and a recompilation to make the
-      Eiffel source look different.
-
-      The only exception of this are keywords. The parser reads them  from
-      an       external       file       you      can      specify      in
-      "Filetype settings/Syntax Highlighting/Details/Arguments".       The
-      structure of this file is as follows:
-
-      · every line contains exactly one keyword
-      · lines beginning with "--" are ignored
-      · empty lines are ignored
-
-      Furthermore, the whole file has to be sorted.  White  space  at  the
-      beginning or end of a line is not allowed. For example:
-
-         -- some keywords
-         Precursor
-         True
-         end
-         if
-         then
-
-      If the keyword file does not exist  or  not  conform  to  the  above
-      rules,  the  parser  views  an  error messages and refuses to render
-      anything.  For  some  examples  keyword  files,  take  a   look   at
-      "golded:add-ons/eiffel/syntax/".
-
-      (In theory, the parser could easily remove white space and sort  the
-      keywords  by itself. In practice, this is a pain in the arse because
-      it is written in C. As this feature is rarely needed,  I  considered
-      the inferior usability acceptable.)
+@remark   @{b}New syntax parser keyword file@{ub}
+@remark
+@remark      Most parts of the syntax parser  are  hard-coded,  meaning  that  it
+@remark      needs  a  change  in its source code and a recompilation to make the
+@remark      Eiffel source look different.
+@remark
+@remark      The only exception of this are keywords. The parser reads them  from
+@remark      an       external       file       you      can      specify      in
+@remark      "Filetype settings/Syntax Highlighting/Details/Arguments".       The
+@remark      structure of this file is as follows:
+@remark
+@remark      · every line contains exactly one keyword
+@remark      · lines beginning with "--" are ignored
+@remark      · empty lines are ignored
+@remark
+@remark      Furthermore, the whole file has to be sorted.  White  space  at  the
+@remark      beginning or end of a line is not allowed. For example:
+@remark
+@remark         -- some keywords
+@remark         Precursor
+@remark         True
+@remark         end
+@remark         if
+@remark         then
+@remark
+@remark      If the keyword file does not exist  or  not  conform  to  the  above
+@remark      rules,  the  parser  views  an  error messages and refuses to render
+@remark      anything.  For  some  examples  keyword  files,  take  a   look   at
+@remark      "golded:add-ons/eiffel/syntax/".
+@remark
+@remark      (In theory, the parser could easily remove white space and sort  the
+@remark      keywords  by itself. In practice, this is a pain in the arse because
+@remark      it is written in C. As this feature is rarely needed,  I  considered
+@remark      the inferior usability acceptable.)
 
 @endnode
 
@@ -358,16 +397,17 @@
 
       @{b}Problems with the syntax parser@{ub}
 
-        The second line of the excerpt
+        Some types syntax errors with multi-line strings are not
+        highlighted as such. For instance,
 
-           print("string ends here"
-                 %string does not continue"); -- syntax error
+           print("next line should start with %
+                 "but doesn't");
 
-        is rendered as manifest string, though it isn't. Fixing this would
-        need  a  context  parser,  which  means  more work. As this is not
-        proper Eiffel anyway, the compiler points out the problem later.
+        Spell checking is not enabled or documented because of several
+        minor bugs.
 
-        Thus I don't plan to ever fix this.
+        Numeric escape sequences are not highlighted, for example
+        "%/65/".
 
       @{b}Problems with the scanner@{ub}
 
@@ -423,15 +463,15 @@
    This is a list of ideas that might be implemented in future
    versions.
 
-   · Make syntax parser recognize routine declarations.
+   · Cleanup and document spell checking.
 
-   · Spell check comments (I always wanted that in every syntax parser)
+   · Make syntax parser highlight routine declarations.
 
    · Make SmallEiffel use ARexx for sending error messages to editor.
 
-   Most on the things mentioned below depend on  my  laziness  and  how  a
-   possible  SmallEiffel  movement  develops  on Amiga. So don't hold your
-   breath.
+   Most on the things mentioned below depend on my laziness and how a
+   possible SmallEiffel/Sofa movement develops on Amiga. So don't hold
+   your breath.
 
 @endnode
 
@@ -515,15 +555,25 @@
 
 @node HISTORY "History"
 
-   @{b}Version 2.0, 11-Oct-1999@{ub}
+   @{b}Version 2.1 10-Jan-2000@{ub}
+
+      · Rewrote syntax parser.
+        · Changed it to a context parser supporting the  official  generic
+          keyword configuration.
+        · Added support for multi-line string manifests (again).
+        · Removed syntax highlighting for "Type name" and "Constant name".
+      · Fixed some broken buttons in the "Eiffel (Short)" toolbar.
+      · Removed some unneeded files from the distribution.
+
+   @{b}Version 2.0, 13-Oct-1999@{ub}
 
       · Updated for GoldEd Studio 6.
-      · Fixed bug in syntax parser: also  removed  "false"  from  list  of
-        keywords.
+@remark      · Fixed bug in syntax parser: also  removed  "false"  from  list  of
+@remark        keywords.
       · Added @{" Mouse'n'browse " link MOUSE}
       · Added detection of attributes and constants to @{" scanner " link SCANNER}
-      · Added support for syntax parser to  read  keywords  from  external
-        file.
+@remark      · Added support for syntax parser to  read  keywords  from  external
+@remark        file.
       · Renamed `finder.ged' to `open_class.ged'
       · Renamed `short.ged' to `open_short.ged'
       · Renamed `pretty.ged' to `reformat.ged'
@@ -584,4 +634,25 @@
       · Initial release featuring syntax parser
 
 @endnode
+@node NAMING "Naming conventions"
+
+   @{b}Type name@{ub}
+      Any identifier that may be used as a type, or part of a type, should be
+      written all in upper case. This includes:
+
+      · Class names, in all possible uses
+      · Formal generic parameters, such as @{i}G@{ui} in @{i}LIST@{ui}[@{i}G@{ui}].
+      · Basic types like @{i}BOOLEAN@{ui}, @{i}INTEGER@{ui} and @{i}BIT@{ui}.
+
+   @{b}Constant name@{ub}
+      Constant attributes should be written with an initial capital letter,
+      with the rest in lower case, as in
+
+      · @{i}Red@{ui}, @{i}Green@{ui}, @{i}Blue@{ui}: INTEGER is Unique
+      · @{i}Something_to_stay_that_way@{ui}: REAL
+
+
+
+@endnode
+
 

@@ -1,0 +1,9 @@
+-- Eiffel short form reserved words
+-- $VER: short.reserved_words 1.1 (9.1.00)
+Current
+False
+Precursor
+Result
+True
+Void
+

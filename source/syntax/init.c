@@ -6,6 +6,12 @@ Prototype BOOL InitC(void);
 Prototype void ExitC(void);
 
 ///
+/// "global variables"
+
+struct SignalSemaphore MemorySemaphore = { 0 };
+APTR                   MemoryPool      = NULL;
+
+///
 /// "init"
 
 /* ----------------------------------- InitC -----------------------------------
@@ -17,23 +23,28 @@ Prototype void ExitC(void);
 BOOL
 InitC(void)
 {
-    return(TRUE);
+    InitSemaphore(&MemorySemaphore);
+
+    if (MemoryPool = AsmCreatePool(MEMF_ANY | MEMF_PUBLIC, 4096, 4096, SysBase))
+        return(TRUE);
+    else
+        return(FALSE);
+
 }
 
 ///
-/// "init"
-
-/* ----------------------------------- ExitC -----------------------------------
-
- Library startup code (C entry point).
-
-*/
+/// "exit"
 
 void
 ExitC(void)
 {
-    ;
+    if (MemoryPool) {
+
+        AsmDeletePool(MemoryPool, SysBase);
+
+        MemoryPool = NULL;
+    }
 }
 
-///
 
+///

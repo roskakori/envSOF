@@ -49,7 +49,7 @@ InitDesc:   dc.w    $4AFC       ;RTC_MATCHWORD
             dc.l    Init        ;Pointer to init routine
 
 _LibName:   dc.b    'eiffel.parser',0
-_LibId:     dc.b    'eiffel.parser 2.0 (1.10.1999)',13,10,0
+_LibId:     dc.b    'eiffel.parser',13,10,0
             ds.w    0
 EndCode:
 
@@ -106,3 +106,30 @@ _ALibReserved
 
             END
 
+            xref    _AsmCreatePool
+            xref    _AsmDeletePool
+            xref    _AsmAllocPooled
+            xref    _AsmFreePooled
+
+            xdef    @AsmCreatePool
+            xdef    @AsmDeletePool
+            xdef    @AsmAllocPooled
+            xdef    @AsmFreePooled
+
+            ;   POOL.ASM
+            ;
+            ;   Library stubs
+
+@AsmCreatePool:
+            bra     _AsmCreatePool
+
+@AsmDeletePool:
+            bra     _AsmDeletePool
+
+@AsmAllocPooled:
+            bra     _AsmAllocPooled
+
+@AsmFreePooled:
+            bra     _AsmFreePooled
+
+            END

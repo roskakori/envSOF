@@ -1,16 +1,11 @@
--- Eiffel short form reserved names and words
--- $VER: short.keyword 1.0 (26.8.99)
-Current
-False
-Precursor
-Result
-True
-Void
+-- Eiffel short form keywords
+-- $VER: short.keywords 1.1 (9.1.00)
 alias
 all
 and
 check
 class
+create
 creation
 debug
 deferred
@@ -31,7 +26,6 @@ like
 not
 obsolete
 of
--- for "end of CLASS"
 old
 once
 or

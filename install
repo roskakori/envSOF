@@ -1,7 +1,7 @@
 ; install - Installer script for Eiffel/Sofa mode.
 ; Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
 ;
-; $VER: Install 2.1 (10.10.1999)
+; $VER: Install 2.2 (10.1.00)
 
 
 ; Ensure that minimum installer version to be installed
@@ -194,10 +194,10 @@
          (
             ; update registry
             (working #eiffel_registry)
-            (if (exists ("golded:etc/uninstall/envSOF20.bat"))
+            (if (exists ("golded:etc/uninstall/envSOF21.bat"))
                (
-                   (run "golded:add-ons/regedit/regedit script=golded:etc/uninstall/envSOF20.bat label=uninstall")
-                   (delete "golded:etc/uninstall/envSOF20.bat")
+                   (run "golded:add-ons/regedit/regedit script=golded:etc/uninstall/envSOF21.bat label=uninstall")
+                   (delete "golded:etc/uninstall/envSOF21.bat")
                )
                (run "golded:add-ons/regedit/regedit script=install.bat label=uninstall")
             )
@@ -258,7 +258,7 @@
             (copyfiles
                (source "install.bat")
                (dest "golded:etc/uninstall")
-               (newname "envSOF20.bat")
+               (newname "envSOF21.bat")
             )
 
             ; installation completed

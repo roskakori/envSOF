@@ -1,12 +1,5 @@
--- Eiffel reserved names and words
--- $VER: eiffel.word 1.0 (26.8.99)
-Current
-False
-Precursor
-Result
-True
-Unique
-Void
+-- Eiffel keywords
+-- $VER: eiffel.keywords 1.1 (9.1.00)
 alias
 all
 and
@@ -58,5 +51,4 @@ until
 variant
 when
 xor
-
 

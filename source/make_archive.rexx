@@ -1,5 +1,5 @@
 /*
- * create_archive.rexx -- Create envSOFxx archive.
+ * make_archive.rexx -- Create envSOFxx archive.
  *
  * Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
  *
@@ -48,14 +48,15 @@ old_directory = Pragma('D', location)
 
 /* Validate manual */
 Say 'check manual'
-Failat 10
+'GuideCheck ' || manual_guide
+/*
 'GuideCheck >' tmp_file || ' ' || manual_guide
 if RC ~= 0 then do
    Say 'Cannot accept manual "' || manual_guide || '"'
    Say
    'type ' || tmp_file
    Exit 10
-end
+end */
 
 /* Validate references in "install" */
 Say 'check installer'
@@ -153,7 +154,7 @@ Call copy('golded:add-ons/eiffel/syntax/#?', target_directory || '/eiffel/syntax
 
 Call copy('golded:etc/registry/presets/eiffel#?', target_directory || '/eiffel/presets')
 
-Call copy('dh0:studio/etc/registry/presets/#?.syntax', target_directory || '/eiffel/presets')
+Call copy('dh0:studio/etc/registry/presets/eiffel#?.syntax', target_directory || '/eiffel/presets')
 
 'delete quiet "' || target_directory || '/eiffel/presets/eiffel.(api|menu)"'
 
@@ -175,7 +176,7 @@ Call copy('forum.txt.info', target_directory)
 
 /* Copy preview */
 Say 'copy preview'
-Call copy('Preview#?', target_directory)
+Call copy('Preview(|.info)', target_directory)
 
 /* Copy GoldEd install stuff */
 Say 'copy installdata'
@@ -209,7 +210,7 @@ Say
 
 /* Create stuff in release: */
 Call copy(base_name || '.(lha|readme)', 'release:')
-Call copy(base_name || '.(lha|readme)', 'release:bak')
+Call copy(base_name || '.(lha|readme)', 'release:backup')
 
 if Upper(arguments) ~= "NOCLEANUP" then do
    call cleanup_archive

@@ -3,15 +3,15 @@ Uploader: Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
 Author:   Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
 Type:     text/edit
 Kurz:     Eiffel/Sofa Erweiterung für GoldEd Studio 6
-Version:  2.0
+Version:  2.1
 
 TITLE
 
-  envSOF20
+  envSOF21
 
 VERSION
 
-  2.0
+  2.1
 
 AUTHOR
 
@@ -30,10 +30,9 @@ FEATURES
 
 NEW FEATURES
 
-  - Mouse'n'browse by Control/Shift double-click on class names
-  - Added script to create new class from a template file
-  - Added support for syntax parser to read keywords from external
-    file, allowing better highlighting of short forms.
+  - The syntax parser now is a context parser supporting the
+    "official" generic keyword settings.
+  - Fixed some buttons in the "Eiffel (Short)" toolbar.
 
 SPECIAL REQUIREMENTS
 
@@ -45,7 +44,7 @@ SPECIAL REQUIREMENTS
 
 AVAILABILITY
 
-  aminet:text/edit/envSOF20.lha
+  aminet:text/edit/envSOF21.lha
 
 PRICE
 

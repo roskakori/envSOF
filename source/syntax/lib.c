@@ -9,8 +9,6 @@
  *  WARNING: arguments are passed in certain registers from the assembly
  *        tag file, matched to how they are declared below.  Do not change
  *        the argument declarations!
- *
- * Copyright 1999 Thomas Aglassinger and others, see file "forum.txt"
  */
 
 #include "defs.h"
@@ -23,7 +21,7 @@ Prototype LibCall long            LibExpunge(__A0 struct Library *);
 struct Library *LibBase = NULL;
 struct Library *SysBase = NULL;
 struct Library *DOSBase = NULL;
-struct Library *IntuitionBase = NULL;
+struct Library *RexxSysBase = NULL;
 
 BPTR SegList  = 0;
 
@@ -65,8 +63,7 @@ LibInit(__D0 BPTR segment)
    SysBase = *(struct Library **) 4;
 
    if (DOSBase = OpenLibrary("dos.library", 0)) {
-
-      if (IntuitionBase = OpenLibrary("intuition.library", 0)) {
+      if (RexxSysBase = OpenLibrary("rexxsyslib.library", 0)) {
 
          if (LibBase = lib = MakeLibrary((APTR) Vectors, NULL, NULL, sizeof(struct ParserBase), (BPTR) NULL)) {
 
@@ -90,72 +87,14 @@ LibInit(__D0 BPTR segment)
 
             FreeMem((char *) lib - lib->lib_NegSize, lib->lib_NegSize + lib->lib_PosSize);
          }
-         CloseLibrary(IntuitionBase);
-         IntuitionBase = NULL;
+         CloseLibrary(RexxSysBase);
+         RexxSysBase = NULL;
       }
       CloseLibrary(DOSBase);
       DOSBase = NULL;
    }
    return (NULL);
 }
-
-
-#if 0
-LibCall struct Library *
-LibInit(__D0 BPTR segment)
-{
-    struct Library *lib;
-
-    static const long Vectors[] = {
-
-        (long)ALibOpen,
-        (long)ALibClose,
-        (long)ALibExpunge,
-        (long)ALibReserved,
-
-        (long)MountScanner,
-        (long)StartScanner,
-        (long)CloseScanner,
-        (long)FlushScanner,
-        (long)SetupScanner,
-        (long)BriefScanner,
-        (long)ParseLine,
-        (long)UnparseLines,
-        (long)ParseSection,
-        -1
-    };
-
-    SysBase = *(long *)4;
-
-    if (DOSBase = (long)OpenLibrary("dos.library", 0)) {
-
-        if (IntuitionBase = (long) OpenLibrary("intuition.library", 0)) {
-
-            if (LibBase = lib = MakeLibrary((APTR)Vectors, NULL, NULL, sizeof(struct ParserBase), NULL)) {
-
-                lib->lib_Node.ln_Type = NT_LIBRARY;
-                lib->lib_Node.ln_Name = LibName;
-                lib->lib_Flags        = LIBF_CHANGED | LIBF_SUMUSED;
-                lib->lib_Version      = 37;
-                lib->lib_Revision     = 0;
-                lib->lib_IdString     = (APTR)LibId;
-
-                ((struct ParserBase *)lib)->Magic = PARSER_MAGIC;
-
-                SegList = segment;
-
-                AddLibrary(lib);
-
-                InitC();
-
-                return(lib);
-            }
-        }
-    }
-
-    return(NULL);
-}
-#endif
 
 /*
  *    Open is given the library pointer and the version request.  Either
@@ -214,59 +153,25 @@ LibClose(__A0 struct Library *lib)
 LibCall long
 LibExpunge(__A0 struct Library *lib)
 {
-    if (lib->lib_OpenCnt) {
+   if (lib->lib_OpenCnt) {
 
-        lib->lib_Flags |= LIBF_DELEXP;
-        return(NULL);
-    }
+      lib->lib_Flags |= LIBF_DELEXP;
+      return (NULL);
+   }
+   ExitC();
 
-    ExitC();
+   Remove(&lib->lib_Node);
 
-    Remove(&lib->lib_Node);
+   FreeMem((char *) lib - lib->lib_NegSize, lib->lib_NegSize + lib->lib_PosSize);
 
-    FreeMem((char *)lib - lib->lib_NegSize, lib->lib_NegSize + lib->lib_PosSize);
-
-    if (IntuitionBase) {
-
-        CloseLibrary(IntuitionBase);
-        IntuitionBase = NULL;
-    }
-
-    if (DOSBase) {
-
-        CloseLibrary(DOSBase);
-        DOSBase = NULL;
-    }
-
-    return((long)SegList);
+   if (DOSBase) {
+      CloseLibrary(DOSBase);
+      DOSBase = NULL;
+   }
+   if (RexxSysBase) {
+      CloseLibrary(RexxSysBase);
+      RexxSysBase = NULL;
+   }
+   return ((long) SegList);
 }
 
-#if 0
-LibCall long
-LibExpunge(__A0 struct Library *lib)
-{
-    if (lib->lib_OpenCnt) {
-
-        lib->lib_Flags |= LIBF_DELEXP;
-        return(NULL);
-    }
-
-    Remove(&lib->lib_Node);
-
-    FreeMem((char *)lib - lib->lib_NegSize, lib->lib_NegSize + lib->lib_PosSize);
-
-    if (DOSBase) {
-
-        CloseLibrary((struct Library *)DOSBase);
-        DOSBase = NULL;
-    }
-
-    if (IntuitionBase) {
-
-        CloseLibrary((struct Library *)IntuitionBase);
-        IntuitionBase = NULL;
-    }
-
-    return((long)SegList);
-}
-#endif

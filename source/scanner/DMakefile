@@ -1,0 +1,24 @@
+# Eiffel scanner DMakefile
+
+SCANNER= golded:add-ons/eiffel/scanner/eiffel
+TESTER = test_eiffel
+SOURCE = eiffel.c
+
+CFLAGS = -// -l0 -md -ms1 -mRR
+
+all : $(SCANNER) $(TESTER)
+
+rebuild :
+	delete quiet $(SCANNER) $(TESTER)
+	dmake
+
+$(SCANNER) : $(SOURCE)
+	 dcc $(SOURCE) $(CFLAGS) -o $(SCANNER)
+	 flush
+
+# Using SAS/c for testing because of debugger... he he he.
+$(TESTER) : $(TESTER).c $(SOURCE)
+	 sc LINK $(TESTER).c
+#   dcc $(TESTER).c -o $(TESTER)
+
+

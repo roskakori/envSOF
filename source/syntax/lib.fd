@@ -1,0 +1,13 @@
+##base _ParserBase
+##bias 30
+##public
+MountScanner()()
+StartScanner(globalconfigptr,editconfigptr,syntaxstack)(A0,A1,D0)
+CloseScanner(scanid)(D0)
+FlushScanner(scanid)(D0)
+SetupScanner(globalconfigptr)(A0)
+BriefScanner(scanid,notify)(D0,A0)
+ParseLine(scanid,linenode,line)(D0,A0,D1)
+UnparseLines(scanid,linenode,lines)(A0,D0)
+ParseSection(scanid,linenode,lines)(D0,A0,D1)
+##end

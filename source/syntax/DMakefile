@@ -1,0 +1,59 @@
+
+# scanner library makefile (DICE)
+
+OD     = o/
+EXE    = golded:add-ons/eiffel/syntax/eiffel.parser
+CFLAGS = -mRR -ms -mi -s -// -I$(OD) -l0 -Ldlib: -lc -lamiga20 -proto -Idinclude:amiga30
+
+PROTOS = $(OD)lib-protos.h
+
+# linker libraries (used during GoldED development only)
+
+LIB    = golded:developer/syntax/dlib/scanlib.lib
+RLIB   = golded:developer/syntax/dlib/scanlibr.lib
+SRLIB  = golded:developer/syntax/dlib/scanlibsr.lib
+
+SRCS   = tag.a init.c lib.c funcs.c language.c
+OBJS   = $(SRCS:"*.a":"$(OD)*.o") $(SRCS:"*.c":"$(OD)*.o")
+
+all: $(OD) $(PROTOS) $(EXE) $(LIB) $(RLIB) $(SRLIB)
+
+# note: flush program flushes memory (i.e. any previous version of
+# this library that is in memory is flushed), new utility that does
+# not exist on older DICE distributions.
+
+$(EXE) : $(OBJS)
+    dcc $(CFLAGS) %(right) -o %(left) -v
+    -flush
+
+$(OBJS) : $(SRCS)
+    dcc $(CFLAGS) %(right) -o %(left) -c
+
+$(PROTOS) : $(SRCS)
+    makeproto -o %(left) %(right)
+
+$(LIB) : lib.fd
+    fdtolib golded:developer/syntax/fd/lib.fd -o t:lib.o -I$(OD)
+    copy t:lib.o %(left)
+    delete t:lib.o
+
+$(RLIB) : lib.fd
+    fdtolib golded:developer/syntax/fd/lib.fd -mr -h defs.h -o t:lib.o -I$(OD)
+    copy t:lib.o %(left)
+    delete t:lib.o
+
+$(SRLIB) : lib.fd
+    fdtolib golded:developer/syntax/fd/lib.fd -mr -md -h defs.h -o t:lib.o -I$(OD)
+    copy t:lib.o %(left)
+    delete t:lib.o
+
+clean:
+    -delete $(OBJS) $(PROTOS) QUIET
+    touch golded:syntax/developer/fd/lib.fd
+
+$(OD) : $(OD)
+    makedir %(left:*/:*)
+
+rebuild:
+    -touch $(SRCS)
+    -dmake

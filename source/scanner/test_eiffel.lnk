@@ -1,0 +1,8 @@
+FROM LIB:c.o "test_eiffel.o"
+TO "test_eiffel"
+LIB LIB:sc.lib LIB:amiga.lib
+ADDSYM
+BATCH
+QUIET
+NOICONS
+

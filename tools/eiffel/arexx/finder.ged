@@ -1,0 +1,184 @@
+/*
+ * finder.ged -- Find and load class under cursor.
+ *
+ * Copyright (C) 1999 Thomas Aglassiner <agi@sbox.tu-graz.ac.at>
+ * Freeware. Use at your own risk.
+ */
+version_info = "$VER: finder.ged 1.2 (4.3.99)"
+
+OPTIONS RESULTS                             /* enable return codes     */
+
+if (LEFT(ADDRESS(), 6) ~= "GOLDED") then    /* not started by GoldEd ? */
+    address 'GOLDED.1'
+
+'LOCK CURRENT RELEASE=4'                    /* lock GUI, gain access   */
+
+if (RC ~= 0) then
+    exit
+
+OPTIONS FAILAT 21
+
+SIGNAL ON SYNTAX                            /* ensure clean exit       */
+
+/* ------------------------ INSERT YOUR CODE HERE: ------------------- */
+
+'QUERY WORD VAR=class_name'
+
+legal_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ_1234567890'
+IF (Strip(Upper(class_name), 'B', legal_letters) = '') ,
+   & (class_name ~= '') THEN ,
+DO
+   temporary_file = 't:finder.tmp'
+
+   ADDRESS COMMAND 'rx >nil: golded:tools/eiffel/arexx/execute.rexx Port=SMALLEIFFEL.1 ' || ,
+                   '"finder >' || temporary_file || ' ' || class_name || '"'
+
+   class_found = 0
+   IF RC = 0 THEN DO
+      IF OPEN('full_path', temporary_file, 'read') THEN DO
+         class_found = 1
+         class_path = READLN('full_path')
+         'WINDOW FORCE USE="' || class_path || '"'
+         CALL CLOSE('full_path')
+      END
+   END
+
+   IF ~class_found THEN DO
+      'REQUEST STATUS=""'
+      'REQUEST TITLE="Find Class Error" PROBLEM="Class ''' || class_name || ''' not found."'
+   END
+
+END
+ELSE DO
+   'REQUEST TITLE="Find Class Error" PROBLEM="Cursor must be placed over a proper class name."'
+END
+
+
+/* ---------------------------- END OF YOUR CODE --------------------- */
+
+'UNLOCK' /* VERY important: unlock GUI */
+
+exit
+
+SYNTAX:
+
+   SAY "Syntax error line" SIGL ":" ERRORTEXT(RC)
+   'UNLOCK'
+
+   exit
+
+/***** ugly/convert_amiga_path_to_uri **************************************
+ * NAME
+ *   convert_amiga_path_to_uri -- Convert path from Amiga to URI style
+ * FUNCTION
+ *   Convert path from Amiga to URI style. The following conversion rules
+ *   are applied:
+ *
+ *   - Device names are transformed from e.g. "ram:" to "/ram/"
+ *   - Leading "/"'s replaced by "../"
+ *   - All "//"'s are replaced by "/../"
+ * INPUTS
+ *   amiga_path - Amiga style path
+ * RESULT
+ *   Path in URI style
+ * BUGS
+ *   The input path is not validated for correctness. In such a case the
+ *   result will also be invalid.
+ * EXAMPLES
+ *   "ram:"           -> "/ram/"
+ *   "ram:sepp"       -> "/ram/sepp"
+ *   "sepp//resi"     -> "sepp/../resi"
+ *   "ram:sepp//resi" -> "/ram/sepp/../resi"
+ *   "//resi/hugo"    -> "../../resi/hugo"
+ *   "//resi//hugo"   -> "../../resi/../hugo
+ **************************************************************************/
+convert_amiga_path_to_uri : PROCEDURE
+    PARSE ARG amiga_path
+
+    uri = ''
+
+    /* Extract device name from Amigapath (if there is any) */
+    device = ''
+    IF (POS(':', amiga_path) > 0) THEN DO
+        PARSE VAR amiga_path device ':' path_part
+        amiga_path = path_part
+    END
+
+    /* Convert leading "/" to "../" */
+    DO WHILE (LEFT(amiga_path, 1) = '/')
+        amiga_path = DELSTR(amiga_path, 1, 1)
+        uri = uri || '../'
+    END
+
+    uri = uri || amiga_path
+
+    /* Convert '//' inside string to '/../' */
+    DO WHILE (POS('//', uri) > 0)
+        PARSE VAR uri before '//' after
+        uri = before || '/../' || after
+    END
+
+    /* Add device name in Unix-style;
+     * 'ram:' becomes '/ram/' */
+    IF (device ~= '') THEN DO
+        uri = '/' || device || '/' || uri
+    END
+
+    RETURN uri
+
+/***** ugly/convert_uri_to_amiga_path **************************************
+ * NAME
+ *   convert_uri_to_amiga_path -- Convert path from URI to Amiga style
+ * SYNOPSIS
+ *   amiga_path = convert_uri_to_amiga_path( uri )
+ * FUNCTION
+ *   Convert path from URI to Amiga style. The following conversion rules
+ *   are applied:
+ *
+ *   - Remove leading './'
+ *   - Replace every leading '../' by '/'
+ *   - Replace every '/../' by '//'
+ *   - Replace every '~' by '%7E'
+ * INPUTS
+ *   uri - URI style path
+ * RESULT
+ *   amiga_path - Amiga style path
+ * BUGS
+ *   The input path is not validated for correctness. In such a case the
+ *   result will also be invalid.
+ *
+ *   Devices in URI style are not handled.
+ **************************************************************************/
+convert_uri_to_amiga_path : PROCEDURE
+    PARSE ARG uri
+
+    amiga_path = ''
+
+    /* Remove leading "./" */
+    IF (LEFT(uri, 2) = './')
+        uri = DELSTR(uri, 1, 2)
+    END
+
+    /* Replace leading "../" by "/" */
+    DO WHILE (LEFT(uri, 3) = '../')
+        uri = DELSTR(uri, 1, 3)
+        amiga_path = amiga_path || '/'
+    END
+
+    amiga_path = amiga_path || uri
+
+    /* Replace '/../' inside string by '//' */
+    DO WHILE (POS('//', uri) > 0)
+        PARSE VAR uri before '/../' after
+        amiga_path = before || '//' || after
+    END
+
+    /* Replace '~' by '%7E' */
+    DO WHILE (POS('~', uri) > 0)
+        PARSE VAR uri before '~' after
+        amiga_path = before || '%7E' || after
+    END
+
+    RETURN amiga_path
+
+

@@ -1,0 +1,54 @@
+Short:    SmallEiffel mode for GoldEd 4
+Uploader: Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
+Author:   Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
+Type:     text/edit
+Kurz:     SmallEiffel Modus für GoldEd 4
+
+TITLE
+
+  GedEiffel
+
+VERSION
+
+  1.2
+
+AUTHOR
+
+  Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
+
+DESCRIPTION
+
+  GedEiffel is a SmallEiffel mode for GoldEd. It consists of syntax
+  parser, routine scanner, toolbar and a couple of ARexx scripts to
+  interface `finder' and `pretty'.
+
+FEATURES
+
+  Colorful, practical and free.
+
+NEW FEATURES
+
+  Bugfixes and minor improvements.
+
+SPECIAL REQUIREMENTS
+
+  - GoldEd, version 4
+
+  - SmallEiffel, available from aminet:dev/lang/
+
+  - rexxdossupport.library, available from aminet:util/rexx/
+
+
+AVAILABILITY
+
+  aminet:text/edit/GedEiffel.lha
+
+PRICE
+
+  Freeware.
+
+DISTRIBUTABILITY
+
+  Freely distributable as long no files are added or removed from the
+  archive.
+

@@ -1,0 +1,399 @@
+@database "Manual.guide"
+@author "Thomas Aglassinger"
+@remark "$VER: Manual.guide 1.2 (4.3.99)"
+
+@node MAIN "GedEiffel - A SmallEiffel Mode for GoldEd"
+
+   @{b}GedEiffel - A SmallEiffel Mode for GoldEd@{ub}
+
+   About
+
+      @{" Copyright     " link COPYRIGHT} - Freeware
+      @{" Requirements  " link REQUIREMENTS} - What else do you need
+      @{" Installation  " link INSTALLATION} - Installer script rulez
+
+   Usage
+
+      @{" Syntax parser " link SYNTAXPARSER} - Say it with colors
+      @{" Scanner       " link SCANNER} - Who's there?
+      @{" Console       " link CONSOLE} - Show what's going on
+      @{" Toolbar       " link TOOLBAR} - Only one mouse-click away
+      @{" Templates     " link TEMPLATES} - Lazy is beautiful
+
+   Miscellaneous
+
+      @{" Support       " link SUPPORT} - Where to get updates
+      @{" Known bugs    " link BUGS} - Watch out
+      @{" Future        " link FUTURE} - Things to come
+      @{" History       " link HISTORY} - What happened so far
+
+
+
+   Copyright © 1999 Thomas Aglassinger <agi\@sbox.tu-graz.ac.at>
+
+@endnode
+
+
+@node COPYRIGHT "Copyright"
+
+   GedEiffel is Copyright © 1999 Thomas Aglassinger. All rights reserved.
+
+   GedEiffel is freely distributable as long the archive and its  contents
+   remain unchanged, no data are added and no data are removed.
+
+   You use it at your own risk. No responsibilities are taken for  trashed
+   sources,  damaged Amigas or any other components or data involved while
+   using GedEiffel.
+
+@endnode
+
+@node REQUIREMENTS "Requirements"
+
+   Most of the ARexx scripts included  use  the  "rexxdossupport.library",
+   Copyright    ©   Harmut   Goebel   and   available   from   Aminet   in
+   util/rexx/rexxdossupport.lha.
+
+   The  SmallEiffel  compiler  for  Amiga  is  available  from  Aminet  in
+   dev/lang/SmallEiffel*.lha.  For  more information about it refer to the
+   SmallEiffel Homepage at http://www.loria.fr/SmallEiffel/.
+
+   Naturally, you will also need GoldEd, Copyright © Dietmar Eilert.
+
+@endnode
+
+@node INSTALLATION "Installation"
+
+   To install the whole package, use the included Installer script.
+
+   If you do not trust the script, you can  perform  the  following  steps
+   manually:
+
+   · Copy "syntax/eiffel.parser" to GoldEd:syntax/
+   · Copy "scanner/eiffel" to GoldEd:scanner/
+   · MakeDir GoldEd:toolbar/eiffel
+   · Copy "toolbar/eiffel/#?" to GoldEd:toolbar/eiffel/
+   · MakeDir GoldEd:tools/eiffel/arexx
+   · Copy "Manual.guide" to GoldEd/tools/eiffel/
+   · Copy "tools/eiffel/arexx/#?" to GoldEd:tools/eiffel/arexx
+   · Copy "presets/#?" to GoldEd:presets/
+
+   If you are using GoldEd 5, wait for the next release.
+
+@endnode
+
+
+@node SYNTAXPARSER "Syntax Parser"
+
+   The syntax parser highlights syntax elements in  different  colors.  It
+   conforms  to  the  rules  of  chapter  26  of  the book @{i}Object Oriented
+   Software Construction@{ui} (2nd ed., 1997). A PDF version  of  this  chapter
+   should also be available from http://www.eiffel.com/.
+
+   @{b}Comment@{ub}
+      Beginning with two hyphens (--) and lasting until  the  end  of  the
+      line.
+
+   @{b}Manifest string@{ub}
+      Used for text enclosed in  double  quotes  (").  Multi-line  strings
+      ending with a percent sign (%) and continuing in the next line after
+      another percent sign are also supported.
+
+      Additionally, character constants enclosed in single quotes (') are
+      rendered in the same color.
+
+   @{b}Keyword@{ub}
+      Used for keywords of the language that  play  a  strictly  syntactic
+      role, like @{i}if@{ui}, @{i}feature@{ui} or @{i}invariant@{ui}.
+
+   @{b}Reserved word@{ub}
+      Used for reserved words that carry an associated semantics, such  as
+      @{i}Current@{ui}, @{i}Result@{ui}, @{i}True@{ui} and @{i}Unique@{ui}.
+
+      (Note: The rule for some of these  have  changed  since  1992,  when
+      @{i}Eiffel:  The Language@{ui} was published. For example, @{i}True@{ui} was initially
+      written @{i}true@{ui}.)
+
+   @{b}Type name@{ub}
+      Any identifier that may be used as a type, or part of a type, should be
+      written all in upper case. This includes:
+
+      · Class names, in all possible uses
+      · Formal generic parameters, such as @{i}G@{ui} in @{i}LIST@{ui}[@{i}G@{ui}].
+      · Basic types like @{i}BOOLEAN@{ui}, @{i}INTEGER@{ui} and @{i}BIT@{ui}.
+
+   @{b}Constant name@{ub}
+      Constant attributes should be written with an initial capital letter,
+      with the rest in lower case, as in
+
+      · @{i}Red@{ui}, @{i}Green@{ui}, @{i}Blue@{ui}: INTEGER is Unique
+      · @{i}Something_to_stay_that_way@{ui}: REAL
+
+   @{b}Error or flaw@{ub}
+      Used for some things that are possibly wrong:
+
+      · Unterminated manifest strings
+      · Names not conforming to any convention, like in @{i}DontUseThis@{ui}.
+
+      However, this is no complete check. You  code  might  still  contain
+      various syntax errors.
+
+@endnode
+
+@node SCANNER "Scanner"
+
+   The scanner extracts names of routine features.
+
+   You can activate it from the  @{"Toolbar" link TOOLBAR},  by  selecting  the  menu  item
+   "Search/Funtion list..." or by pressing Amiga-/.
+
+   (Technically speaking, it searches for lines that end with  "  is"  and
+   assumes the first word to be the name of the routine.)
+
+@endnode
+
+@node CONSOLE "Console"
+
+   @{b}The idea behind the SmallEiffel console@{ub}
+
+   Many buttons from the @{"Toolbar" link TOOLBAR} invoke normal CLI commands  like  `make'
+   and  `pretty'. Though GoldEd allows such commands to open a new console
+   to show their output, this is not very  practical.  Quickly  one  finds
+   himself closing the console all the time.
+
+   The SmallEiffel mode uses a different mechanisms:  all  commands  write
+   their output to the same console, named @{i}SmallEiffel Console@{ui}. Its window
+   title is SMALLEIFFEL.1. Basically, you do not have to bother about that
+   because everything is set up properly during installation.
+
+   The only important thing to  keep  in  mind  is  that  the  SmallEiffel
+   console  is  @{i}output only@{ui}. That means, although you can apparently enter
+   commands into it, they will never be executed.
+
+   @{b}Specifying an alternative console window dimension@{ub}
+
+   If you do not like the window dimension of the console, you can specify
+   your      own      by      setting     the     environment     variable
+   "env:Console/SMALLEIFFEL.1" with a proper  console  specification,  for
+   example
+
+      makedir env:Console
+      setenv Console/SMALLEIFFEL.1 "CON:0/0/400/200/SMALLEIFFEL.1/SCREEN**/AUTO/CLOSE/WAIT/INACTIVE"
+
+   The "SCREEN**" will be descaped  to  "SCREEN*",  which  refers  to  the
+   frontmost  screen (usually "Workbench" or "GOLDED.1"). For more details
+   on console specifications, refer to the AmigaDOS manual  or  check  the
+   guide that comes with KingCON (available from Aminet).
+
+   This is all you have to know for just using the console. Stop  reading,
+   unless you want to get confused.
+
+   @{b}How it works inside@{ub}
+
+   For those how want to know  what  going  in  "inside",  here's  a  more
+   detailed  description:  The whole effect described above is achieved by
+   two ARexx scripts:
+
+   @{i}Console.rexx@{ui} kind-of is a CLI with an ARexx-port. It  simply  tries  to
+   execute  every  message  as  a  CLI command. However, after executing a
+   command, the console does not quit and close  its  window,  but  simply
+   waits for the next command.
+
+   @{i}Execute.rexx@{ui} is used to send such a command to the SmallEiffel console.
+
+   This might sound more complicated than it  actually  is.  Consider  the
+   following CLI invocation:
+
+      run <>nil: rx >CON: golded:tools/eiffel/arexx/console.rexx Port=SMALLEIFFEL.1
+
+   This  simply  starts  a  console   offering   an   ARexx   port   named
+   `SMALLEIFFEL.1'.  Because  of  the  `run'  command,  it  runs as an own
+   process. Because of the redirection to CON:, it opens an own window for
+   the  new  console. Theoretically, you can now make it execute a command
+   like seen below:
+
+      rx "address SMALLEIFFEL.1 'echo hello'"
+
+   This executes the CLI command `echo hello' in the SmallEiffel  Console,
+   and also shows its output in it: the word "hello".
+
+   However, this is not the recommended way. Instead, use the following:
+
+      rx golded:tools/eiffel/arexx/execute Port=SMALLEIFFEL.1 echo hello
+
+   The main reason for that is that the above  script  always  takes  care
+   that  the  output console has the same current directory as the sending
+   console. Furthermore, it will even invoke console.rexx if no console is
+   already  running at the requested port. And it takes care of the little
+   magic needed to read the Console/SMALLEIFFEL.1 environment variable.
+
+@endnode
+
+@node TOOLBAR "Toolbar"
+
+   The Eiffel toolbar offers the following functions:
+
+   @{b}Make@{ub}
+      Starts `make'. You  have  to  provide  a  Makefile  in  the  current
+      directory.
+
+   @{b}Indent pretty@{ub}
+      Reformats the current source code in the editor using  SmallEiffel's
+      `pretty'.
+
+      If `pretty' fails because the code contains  syntax  errors,  it  is
+      left  unchanged.  In  that  case,  compile it for more details about
+      these errors.
+
+      A backup is created with the same filename but the extension  ".bak"
+      in the directory where the original source code is located.
+
+   @{b}Find class@{ub}
+      Find and load source file for class of the word the cursor currently
+      is positioned over using `finder'.
+
+      Note: Shift-double-clicking a class name has the same effect.
+
+   @{b}View short form@{ub}
+      Display short form of the class of the word the cursor currently  is
+      positioned over.
+
+      (This can be considered some kind of online help. Unfortunately, the
+      awful  speed  of  `short' renders it pretty useless in practice.)
+
+   @{b}Browse classes@{ub}
+      In a future version, this will show the class browser.
+
+   @{b}View list of routines@{ub}
+      Invoke the @{"scanner" link SCANNER} to display a list of all routine features.
+
+   @{b}Help@{ub}
+      Views this help.
+
+   @{b}Close console@{ub}
+      Close the @{"SmallEiffel console" link CONSOLE}. This is useful if you want  to  have
+      more  space  for  typing  and  do not intend to use any of the above
+      functions for some time.
+
+      The next command activated from the toolbar will automatically start
+      a new console when needed.
+
+@endnode
+
+@node TEMPLATES "Templates"
+
+   You can  use  the  following  templates  to  speed  up  typing  certain
+   structures:
+
+   @{b}dE@{ub} (debug instruction)
+      debug("")... end
+
+   @{b}fR@{ub} (loop)
+      from... until... loop... end
+
+   @{b}iF@{ub} (conditional)
+      if... then... else... end
+
+   @{b}iN@{ub} (multi-branch)
+      inspect... when... else... end
+
+   @{b}iS@{ub} (routine declaration)
+      is... require... local... do... ensure... end;
+
+@endnode
+
+
+@node SUPPORT "Support"
+
+   New versions will be uploaded to Aminet. Look for text/edit/GedEiffel.lha
+
+   You can contact the author at the following e-mail address:
+
+   Thomas Aglassinger <agi\@sbox.tu-graz.ac.at>
+
+@endnode
+
+@node BUGS "Known Bugs"
+
+   · For some reason, SmallEiffel error messages do not  show  up  in  the
+     console  when  it was started from a make tool which was started from
+     the toolbar. This renders the  current  implementation  of  the  make
+     button more or less useless.
+
+   · The syntax parser renders the second line of
+
+      print("string ends here"
+            %string does not continue"); -- syntax error
+
+     as manifest string, though it isn't. Fixing this would need a context
+     parser,  which  means more work. As this is not proper Eiffel anyway,
+     the compiler points out the problem later.
+
+     Thus I don't plan to ever fix this.
+
+   · The syntax parser is very slow when closing the  window  because  all
+     parser  chunks  are  allocated  using  AllocVec(). Using memory pools
+     would  probably  speed  this  up.  Fixing  this   would   need   some
+     experimenting  (with  several  reboots  and  hex-dump  alike compiler
+     errors), which I don't plan to do.
+
+@endnode
+
+@node FUTURE "Future"
+
+   This is a list of ideas that might be implemented in  future  versions.
+
+   · Include source code for scanner and parser. Currently  they  are  too
+     messy for that.
+
+   · Add  class  browser.  This  mostly  depends  what   the   SmallEiffel
+     distribution has to offer. (Currently nothing, but it might improve.)
+     Hopefully, this will replace the more or  less  useless  "View  short
+     form".
+
+   · Make SmallEiffel use ARexx for sending error messages to editor.
+
+   · Make syntax parser recognize routine declarations.
+
+   Most on the things mentioned below depend on  my  laziness  and  how  a
+   possible  SmallEiffel  movement  develops  on Amiga. So don't hold your
+   breath.
+
+@endnode
+
+@node HISTORY "History"
+
+   @{b}Version 1.2, 4-Mar-1999@{ub}
+
+      · Fixed bugs in  (finder|pretty|short).ged,  which  all  were  still
+        referring  to  an old internal version of "execute.rexx" not being
+        part of the distribution.
+      · Fixed bugs in scanner:
+        · @{i}frozen@{ui} is skipped
+        · @{i}infix@{ui} and @{i}prefix@{ui} include succeeding operator name
+        · comments ending with " is" are ignored
+      · Fixed bugs in syntax parser:
+        · Added syntax class "Reserved word" for @{i}Result@{ui}, @{i}Unique@{ui}, @{i}True@{ui} etc
+        · Added keyword @{i}not@{ui}
+      · Documented that one can shift-double-click a class name to load it.
+      · Added screenshot (yeah, yeah, yeah!)
+
+   @{b}Version 1.1, 25-Jan-1999@{ub}
+
+      · Added routine feature scanner
+      · Added toolbar
+      · Added various ARexx scripts to invoke most SmallEiffel tools from
+        the toolbar
+      · Added templates
+      · Added SmallEiffel console
+      · Added Installer script
+      · Improved syntax parser. It now is a cached parser and supports a
+        lot more different syntax elements.
+      · Fixed "bugs" in Eiffel example shown in syntax parser
+        configuration requester
+
+   @{b}Version 1.0, 15-Jan-1999@{ub}
+
+      · Initial release featuring syntax parser
+
+@endnode
+

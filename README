@@ -2,7 +2,7 @@ Short:    Eiffel/Sofa Add-On for GoldEd Studio 6
 Uploader: Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
 Author:   Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
 Type:     text/edit
-Kurz:     Eiffel/Sofa Erweiterung für GoldEd Studio 6
+Kurz:     Eiffel/Sofa Erweiterung fÃ¼r GoldEd Studio 6
 Version:  2.1
 
 TITLE
@@ -18,6 +18,8 @@ AUTHOR
   Thomas Aglassinger <agi@sbox.tu-graz.ac.at>
 
 DESCRIPTION
+
+  **This project is archived and no longer maintained.**
 
   This is an Eiffel/Sofa add-on for GoldEd Studio 6. It consists of
   syntax parser, feature scanner, toolbar and a couple of ARexx
